@@ -1,0 +1,5 @@
+find . -name “rico”
+ls | tee -a saida
+
+
+find . -name "machineparameters.txt" | tee -a caminhos_ficheiros
