@@ -1,0 +1,4 @@
+﻿TODO
+
+1 - Forçar a inserção do código do parâmetro em vez da descrição (multi-language friendly)
+2 - 

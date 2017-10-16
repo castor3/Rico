@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.ObjectModel;
+﻿using Aux;
 using Rico.Models;
-using System.ComponentModel;
 using Rico.ViewModels.Commands;
-using System.Windows;
-using Aux;
-using System.Text.RegularExpressions;
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace Rico.ViewModels
 {
@@ -15,17 +15,27 @@ namespace Rico.ViewModels
 		#region Class constructor
 		public ParametersViewModel()
 		{
-			ParametersCollection = new ObservableCollection<Parameter>();
+			ParametersCollection = new ObservableCollection<Parameter>() {
+				new Parameter { ParameterName = "P-ganho,3895" },
+				new Parameter { ParameterName = "I-ganho" },
+				//new Parameter { ParameterName = "Correção Referência ferram." },
+				//new Parameter { ParameterName = "Horas" },
+				//new Parameter { ParameterName = "Cursos" },
+			};
 			AddParameterCommand = new AddParameterCommand(this);
+			CollectValuesCommand = new CollectValuesCommand(this);
 		}
 		#endregion
 
 		#region Fields
 		readonly Parameter _model = new Parameter();
+		readonly string _machineParametersFilePath = @"machineparameters_original.txt";
+		readonly string _CSVFilePath = @"parameters_values.csv";
 		#endregion
 
 		#region Properties
 		public AddParameterCommand AddParameterCommand { get; }
+		public CollectValuesCommand CollectValuesCommand { get; }
 
 		private string _parameterBoxContent;
 		public string ParameterBoxContent
@@ -44,7 +54,6 @@ namespace Rico.ViewModels
 				return _parametersCollection;
 			}
 			set {
-				if (_parametersCollection == value) return;
 				_parametersCollection = value;
 				RaisePropertyChanged(nameof(ParametersCollection));
 			}
@@ -60,7 +69,7 @@ namespace Rico.ViewModels
 		}
 		#endregion
 
-		// Methods
+		#region Methods
 		public void LoadParameters()
 		{
 			//ParametersCollection = _model.ParametersCollection;
@@ -75,6 +84,7 @@ namespace Rico.ViewModels
 				}
 			}
 			ParametersCollection.Add(new Parameter { ParameterName = parameter });
+			ParameterBoxContent = "";
 		}
 		public void RemoveParameter(string parameter)
 		{
@@ -85,23 +95,49 @@ namespace Rico.ViewModels
 				}
 			}
 		}
-		private void SearchParameterInFile(string parameter)
+		public void CollectParametersValues(string originalParameter)
 		{
-			string match = "";
-			string filePath = @"machineparameters_original.txt";
-			foreach (var item in Document.YieldReturnLinesFromFile(filePath)) {
-				if (item.Contains(parameter)) {
-					MessageBox.Show("Match: " + item);
-					match = item;
-					break;
+			var parameterLine = SearchParameterInFile(originalParameter);
+			if (parameterLine == null || string.IsNullOrEmpty(parameterLine) || string.IsNullOrWhiteSpace(parameterLine)) return;
+			var parameterNameAndValue = HandleParameterValue(parameterLine);
+			Document.AppendToFile(_CSVFilePath, parameterNameAndValue.Item1 + ";" + parameterNameAndValue.Item2 + "\n");
+		}
+		private string SearchParameterInFile(string originalParameter)
+		{
+			var line = "";
+			var found = 0;
+			var array = originalParameter.Split(',');
+			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
+				if (item.Contains(array[0]) && item.Contains(array[array.Length-1])) {
+					found++;
+					line = item;
 				}
 			}
-			int index = match.IndexOf('=');
-			match = match.Substring(index + 1).Trim();
-			MessageBox.Show("Match: " + match);
-			var stringValor = Regex.Split(match, @"[^0-9\.]+").Where(c => c != "." && c.Trim() != "");
-			MessageBox.Show("stringValor: " + stringValor.First());
-			double valor = double.Parse(stringValor.First());
+			if (found > 1) {
+				MessageBox.Show("Encontrou mais do que 1 ocorrência do parâmetro:\n" + originalParameter +
+					"\nPor favor especifique o código do parâmetro");
+				return null;
+			}
+			else
+				return line;
 		}
+		private Tuple<string, string> HandleParameterValue(string parameterLine)
+		{// Receives the entire line of the parameter and returns a tuple with the name and the value
+			if (parameterLine == null || !parameterLine.Contains('=')) return new Tuple<string, string>("", "");
+
+			int index = parameterLine.IndexOf('=');
+
+			var parameterName = parameterLine.Remove(index);
+			//MessageBox.Show("<parameterName>:\n" + parameterName);
+
+			parameterLine = parameterLine.Substring(index + 1).Trim();
+			//MessageBox.Show("<parameterLine.'substringed'>:\n" + parameterLine);
+
+			var parameterValue = Regex.Split(parameterLine, @"[^0-9\.]+").Where(c => c != "." && c.Trim() != "").First();
+			//MessageBox.Show("<Value>:\n" + parameterValue);
+
+			return new Tuple<string, string>(parameterName, parameterValue);
+		}
+		#endregion
 	}
 }

@@ -9,18 +9,23 @@
 			<Label Content="{Binding Path=ParameterName}"/>
 		</DataTemplate>
 	</Window.Resources>
-	
+
 	<Grid Background="SlateGray"
 		  DataContext="{Binding Source={StaticResource viewModel}}">
 		<StackPanel>
-			<ListBox ItemsSource="{Binding Path=ParametersCollection}" ItemTemplate="{StaticResource templateLista}"
-					 MinHeight="100" MaxHeight="300" BorderThickness="1.5" BorderBrush="Black"/>
-			<Separator/>
-			<Separator/>
 			<Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding ParameterBoxContent}"
-					Content="Add parameter" Height="30"/>
+					Content="Add parameter" Height="30" Margin="0,2,0,0"/>
 			<TextBox Text="{Binding Path=ParameterBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="25" FontSize="14" BorderThickness="1.5" BorderBrush="Black"/>
+			<Label>
+				<TextBlock Text="Parameters : (para inserir o código do parâmetro separe por uma virgula, ex: 'param,cód')"
+						   TextWrapping="Wrap"/>
+			</Label>
+			<ListBox ItemsSource="{Binding Path=ParametersCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					 ItemTemplate="{StaticResource templateLista}" MinHeight="100" MaxHeight="300" BorderThickness="1.5" BorderBrush="Black"/>
+			<Separator/>
+			<Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding ParametersCollection}"
+					Content="Collect parameters" Height="30"/>
 		</StackPanel>
 	</Grid>
 </Window>
