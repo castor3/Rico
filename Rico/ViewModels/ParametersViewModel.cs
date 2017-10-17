@@ -35,6 +35,7 @@ namespace Rico.ViewModels
 
 		#region Properties
 		public AddParameterCommand AddParameterCommand { get; }
+		public RemoveParameterCommand RemoveParameterCommand { get; }
 		public CollectValuesCommand CollectValuesCommand { get; }
 
 		private string _parameterBoxContent;
@@ -95,35 +96,43 @@ namespace Rico.ViewModels
 				}
 			}
 		}
+		/// <summary>
+		/// Returns TRUE if finds duplicates of the parameter passed
+		/// </summary>
+		public bool FindDuplicateParametersInFile(string parameter)
+		{
+			var found = 0;
+			var array = parameter.Split(',');
+			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
+				if (item.Contains(array[0]) && item.Contains(array[array.Length - 1])) {
+					if (++found > 1) return true;
+				}
+			}
+			return false;
+		}
+		/// <summary>
+		/// Return true = error -&&- false = OK
+		/// </summary>
 		public void CollectParametersValues(string originalParameter)
 		{
 			var parameterLine = SearchParameterInFile(originalParameter);
-			if (parameterLine == null || string.IsNullOrEmpty(parameterLine) || string.IsNullOrWhiteSpace(parameterLine)) return;
+			if (string.IsNullOrEmpty(parameterLine)) return;
 			var parameterNameAndValue = HandleParameterValue(parameterLine);
-			Document.AppendToFile(_CSVFilePath, parameterNameAndValue.Item1 + ";" + parameterNameAndValue.Item2 + "\n");
+			//Document.AppendToFile(_CSVFilePath, parameterNameAndValue.Item1 + ";" + parameterNameAndValue.Item2 + "\n");
 		}
 		private string SearchParameterInFile(string originalParameter)
 		{
-			var line = "";
-			var found = 0;
 			var array = originalParameter.Split(',');
 			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (item.Contains(array[0]) && item.Contains(array[array.Length-1])) {
-					found++;
-					line = item;
+				if (item.Contains(array[0]) && item.Contains(array[array.Length - 1])) {
+					return item;
 				}
 			}
-			if (found > 1) {
-				MessageBox.Show("Encontrou mais do que 1 ocorrência do parâmetro:\n" + originalParameter +
-					"\nPor favor especifique o código do parâmetro");
-				return null;
-			}
-			else
-				return line;
+			return "";
 		}
 		private Tuple<string, string> HandleParameterValue(string parameterLine)
 		{// Receives the entire line of the parameter and returns a tuple with the name and the value
-			if (parameterLine == null || !parameterLine.Contains('=')) return new Tuple<string, string>("", "");
+			if (!parameterLine.Contains('=')) return new Tuple<string, string>("", "");
 
 			int index = parameterLine.IndexOf('=');
 

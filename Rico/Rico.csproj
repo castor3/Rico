@@ -60,6 +60,7 @@
     <Compile Include="Document.cs" />
     <Compile Include="ViewModels\Commands\CollectValuesCommand.cs" />
     <Compile Include="ViewModels\Commands\AddParameterCommand.cs" />
+    <Compile Include="ViewModels\Commands\RemoveParameterCommand.cs" />
     <Compile Include="Views\ParametersView.xaml.cs">
       <DependentUpon>ParametersView.xaml</DependentUpon>
     </Compile>

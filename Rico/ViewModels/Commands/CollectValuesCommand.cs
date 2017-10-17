@@ -37,9 +37,23 @@ namespace Rico.ViewModels.Commands
 
 		public void Execute(object parameter)
 		{
+			var duplicatedParameters = "";
+			var amountOfDuplicates = 0;
 			var collection = parameter as ObservableCollection<Parameter>;
 			foreach (var item in collection) {
-				ViewModel.CollectParametersValues(item.ParameterName);
+				if (ViewModel.FindDuplicateParametersInFile(item.ParameterName) == true) {
+					amountOfDuplicates++;
+					duplicatedParameters += ("->" + item.ParameterName + "\n");
+				}
+			}
+			if (amountOfDuplicates > 0) {
+				MessageBox.Show("Encontrou mais do que 1 ocorrência do(s) seguinte(s) parâmetro(s):\n" +
+					duplicatedParameters + "Por favor especifique o código do parâmetro (ex: 'parâm,cód')");
+				return;
+			}
+			else {
+				foreach (var item in collection)
+					ViewModel.CollectParametersValues(item.ParameterName);
 			}
 		}
 	}
