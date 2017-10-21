@@ -3,28 +3,34 @@
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:vm="clr-namespace:Rico.ViewModels"
 		Height="400" Width="250" Background="White" ResizeMode="NoResize">
-	<Window.Resources>
-		<vm:ParametersViewModel x:Key="viewModel"/>
-		<DataTemplate x:Key="templateLista">
-			<Label Content="{Binding Path=ParameterName}"/>
-		</DataTemplate>
-	</Window.Resources>
+    <Window.Resources>
+        <vm:ParametersViewModel x:Key="viewModel"/>
+        <DataTemplate x:Key="templateLista">
+            <Label Content="{Binding Path=ParameterName}"/>
+        </DataTemplate>
+    </Window.Resources>
 
-	<Grid Background="SlateGray"
+    <Grid Background="SlateGray"
 		  DataContext="{Binding Source={StaticResource viewModel}}">
-		<StackPanel>
-			<Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding ParameterBoxContent}"
+        <StackPanel>
+            <Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding ParameterBoxContent}"
 					Content="Add parameter" Height="30" Margin="0,2,0,0"/>
-			<TextBox Text="{Binding Path=ParameterBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding Path=ParameterBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="25" FontSize="14" BorderThickness="1.5" BorderBrush="Black"/>
-			<Label Content="Parameters :"/>
-			<ListBox ItemsSource="{Binding Path=ParametersCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <Label Content="Parameters :"/>
+            <ListBox Name="listBox" ItemsSource="{Binding Path=ParametersCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+					 SelectedItem="{Binding Path=ParametersCollectionSelectedItem, Mode=TwoWay}"
 					 ItemTemplate="{StaticResource templateLista}" MinHeight="100" MaxHeight="300" BorderThickness="1.5" BorderBrush="Black"/>
-			<Separator/>
-			<Button Command="{Binding Path=RemoveParameterCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding #######}"
-					Content="Remove parameter" Height="30" Margin="0,2,0,0"/>
-			<Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}" CommandParameter="{Binding ParametersCollection}"
-					Content="Collect parameters" Height="30"/>
-		</StackPanel>
-	</Grid>
+            <Separator/>
+            <Button Command="{Binding Path=RemoveParameterCommand, Source={StaticResource viewModel}}"
+					Content="Remove parameter" Height="30" />
+            <Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}"
+					Content="Collect parameters" Height="30" />
+        </StackPanel>
+        <StatusBar VerticalAlignment="Bottom" Background="{x:Null}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Path=StatusBarContent}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
 </Window>

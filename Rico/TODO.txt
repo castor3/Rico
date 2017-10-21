@@ -2,6 +2,6 @@
 
 1 - Forçar a inserção do código do parâmetro em vez da descrição (multi-language friendly)			<<<Desnecessário>>>
 2 - Só executar as ações depois de verificar que não existe duplicados em nenhum dos parâmetros		<<<DONE>>>
-3 - 
-4 -
-5 -
+3 - Remove parameter from list																		<<<DONE>>>
+4 - Implement Caliburn.Micro
+5 - Implement SupportFiles.dll
