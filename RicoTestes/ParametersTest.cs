@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.ViewModels;
-using System.IO;
+using Rico.Models;
 
 namespace RicoTestes
 {
@@ -12,7 +12,8 @@ namespace RicoTestes
 		{
 			ParametersViewModel viewModel = new ParametersViewModel();
 			var initialCount = viewModel.ParametersCollection.Count;
-			viewModel.AddParameter("test");
+			viewModel.ParameterBoxContent = "test";
+			viewModel.AddParameter();
 			var finalCount = viewModel.ParametersCollection.Count;
 			Assert.AreNotEqual(initialCount, finalCount);
 		}
@@ -20,19 +21,26 @@ namespace RicoTestes
 		public void RemoveParameterTest()
 		{
 			ParametersViewModel viewModel = new ParametersViewModel();
-			viewModel.AddParameter("test");
 			var initialCount = viewModel.ParametersCollection.Count;
-			viewModel.RemoveParameter("test");
-			Assert.AreEqual(initialCount, 1);
+			viewModel.ParameterBoxContent = "test";
+			viewModel.AddParameter();
+			var intermediateCount = viewModel.ParametersCollection.Count;
+			if (intermediateCount == initialCount) Assert.Fail();
+			viewModel.ParametersCollectionSelectedItem = new Parameter { ParameterName = "test" };
+			viewModel.RemoveParameter();
+			var finalCount = viewModel.ParametersCollection.Count;
+			Assert.AreEqual(initialCount, finalCount);
 		}
 
 		[TestMethod]
 		public void PreventDuplicateParameterTest()
 		{
 			ParametersViewModel viewModel = new ParametersViewModel();
-			viewModel.AddParameter("test");
+			viewModel.ParameterBoxContent = "test";
+			viewModel.AddParameter();
 			var initialCount = viewModel.ParametersCollection.Count;
-			viewModel.AddParameter("test");
+			viewModel.ParameterBoxContent = "test";
+			viewModel.AddParameter();
 			var finalCount = viewModel.ParametersCollection.Count;
 			Assert.AreEqual(initialCount, finalCount);
 		}
@@ -41,11 +49,9 @@ namespace RicoTestes
 		public void CheckInputBoxIsClearAfterParameterAdded()
 		{
 			ParametersViewModel viewModel = new ParametersViewModel();
-			viewModel.ParameterBoxContent = "valor";
-			viewModel.AddParameter("test");
-			bool nullOrEmpty = string.IsNullOrEmpty(viewModel.ParameterBoxContent);
-			bool nullOrWhiteSpace = string.IsNullOrWhiteSpace(viewModel.ParameterBoxContent);
-			Assert.IsTrue(nullOrEmpty || nullOrWhiteSpace);
+			viewModel.ParameterBoxContent = "test";
+			viewModel.AddParameter();
+			Assert.IsTrue(string.IsNullOrEmpty(viewModel.ParameterBoxContent));
 		}
 	}
 }
