@@ -2,42 +2,40 @@
 		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
 		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 		xmlns:vm="clr-namespace:Rico.ViewModels"
-		Width="250" Background="White" ResizeMode="NoResize">
-	<Window.Resources>
-		<vm:ParametersViewModel x:Key="viewModel"/>
-		<DataTemplate x:Key="templateLista">
-			<Label Content="{Binding Path=ParameterName}"/>
-		</DataTemplate>
-		<Style TargetType="TextBlock">
-			<Setter Property="Foreground" Value="White"/>
-		</Style>
-	</Window.Resources>
+		Height="525" Width="250" ResizeMode="NoResize" Title="Rico - Tomás Castro e Silva" Background="#012c56">
+    <Window.Resources>
+        <vm:ParametersViewModel x:Key="viewModel"/>
+        <DataTemplate x:Key="templateLista">
+            <Label Content="{Binding Path=ParameterName}"/>
+        </DataTemplate>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+    </Window.Resources>
 
-	<Grid Background="#012c56"
-		  DataContext="{Binding Source={StaticResource viewModel}}">
-		<StackPanel>
-			<Image Height="50" Width="250" Source="\Resources\logo.jpg" Margin="0,10,0,0"/>
-			<Label Content="Initial path:" Foreground="White"/>
-			<TextBox Text="{Binding Path=InitialPathBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+    <Grid DataContext="{Binding Source={StaticResource viewModel}}">
+        <StackPanel Margin="0,0,0,22">
+            <Image Height="50" Width="250" Source="\Resources\logo.jpg" Margin="0,10,0,0"/>
+            <Label Content="Initial path:" Foreground="White"/>
+            <TextBox Text="{Binding Path=InitialPathBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="22" FontSize="11" BorderThickness="1.5" BorderBrush="Black" Margin="0,0,0,10"/>
-			<Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}"
+            <Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}"
 					Content="Add parameter" Height="30" Margin="0,2,0,0"/>
-			<TextBox Text="{Binding Path=ParameterBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <TextBox Text="{Binding Path=ParameterBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="25" FontSize="14" BorderThickness="1.5" BorderBrush="Black"/>
-			<Label Content="Parameters :" Foreground="White"/>
-			<ListBox Name="listBox" ItemsSource="{Binding Path=ParametersCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            <Label Content="Parameters :" Foreground="White"/>
+            <ListBox Name="listBox" ItemsSource="{Binding Path=ParametersCollection, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 SelectedItem="{Binding Path=ParametersCollectionSelectedItem, Mode=TwoWay}"
-					 ItemTemplate="{StaticResource templateLista}" MinHeight="100" MaxHeight="225" BorderThickness="1.5" BorderBrush="Black"/>
-			<Separator/>
-			<Button Command="{Binding Path=RemoveParameterCommand, Source={StaticResource viewModel}}"
-					Content="Remove parameter" Height="30" />
-			<Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}"
+					 ItemTemplate="{StaticResource templateLista}" Height="195" BorderThickness="1.5" BorderBrush="Black" Margin="0,0,0,5"/>
+            <Button Command="{Binding Path=RemoveParameterCommand, Source={StaticResource viewModel}}"
+					Content="Remove parameter" Height="30" Margin="0,0,0,5"/>
+            <Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}"
 					Content="Collect parameters" Height="30" />
-		</StackPanel>
-		<StatusBar VerticalAlignment="Bottom" Background="{x:Null}">
-			<StatusBarItem>
-				<TextBlock Text="{Binding Path=StatusBarContent}"/>
-			</StatusBarItem>
-		</StatusBar>
-	</Grid>
+        </StackPanel>
+        <StatusBar VerticalAlignment="Bottom" Background="{x:Null}">
+            <StatusBarItem>
+                <TextBlock Text="{Binding Path=StatusBarContent}"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
 </Window>

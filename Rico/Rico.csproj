@@ -35,6 +35,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\App_Logo.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Caliburn.Micro, Version=3.2.0.0, Culture=neutral, PublicKeyToken=8e5891231f2ed21f, processorArchitecture=MSIL">
       <HintPath>..\packages\Caliburn.Micro.Core.3.2.0\lib\net45\Caliburn.Micro.dll</HintPath>
@@ -74,6 +77,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Bootstrapper.cs" />
+    <Compile Include="Models\ParameterProperties.cs" />
+    <Compile Include="Models\ParameterValidation.cs" />
     <Compile Include="Views\ParametersView.xaml.cs">
       <DependentUpon>ParametersView.xaml</DependentUpon>
     </Compile>
@@ -120,6 +125,12 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\logo.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="App_Logo.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\App_Logo.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

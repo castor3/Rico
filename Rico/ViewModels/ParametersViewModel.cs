@@ -1,12 +1,15 @@
-﻿using Rico.Models;
-using SupportFiles;
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Input;
+using System.IO;
+using System.Globalization;
+using System.Collections.Generic;
+using Rico.Models;
+using SupportFiles;
 
 namespace Rico.ViewModels
 {
@@ -15,10 +18,10 @@ namespace Rico.ViewModels
 		public ParametersViewModel()
 		{
 			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { ParameterName = "P-ganho,3895" },
-				new Parameter { ParameterName = "I-ganho,4797" },
-				new Parameter { ParameterName = "Correção Referência ferram." },
-				new Parameter { ParameterName = "Horas" },
+				new Parameter { ParameterName = "219" },	// P-ganho
+				new Parameter { ParameterName = "118" },	// I-ganho
+				new Parameter { ParameterName = "TR" },		// Correção Referência ferram.
+				new Parameter { ParameterName = "374" },
 				new Parameter { ParameterName = "Cursos" },
 				new Parameter { ParameterName = "Coisas" },
 				new Parameter { ParameterName = "Parametro" },
@@ -32,8 +35,12 @@ namespace Rico.ViewModels
 
 		#region Fields
 		readonly Parameter _model = new Parameter();
-		readonly string _machineParametersFilePath = @"machineparameters_original.txt";
-		readonly string _CSVFilePath = @"parameters_values.csv";
+		readonly string _baseMachineParameters = "MachineParameters.txt";
+		readonly string _parametersFilesPaths = "machinepaths.txt";
+		readonly string _CSVFilePath = "parameters_values.csv";
+
+		string _machineParametersFilePath = string.Empty;
+		IList<string> _listOfParameters = new List<string>();
 		#endregion
 
 		#region Properties
@@ -42,8 +49,7 @@ namespace Rico.ViewModels
 		public ICommand CollectValuesCommand { get; }
 
 		private string _initialPathBoxContent;
-		public string InitialPathBoxContent
-		{
+		public string InitialPathBoxContent {
 			get { return _initialPathBoxContent; }
 			set {
 				if (_initialPathBoxContent == value) return;
@@ -52,8 +58,7 @@ namespace Rico.ViewModels
 			}
 		}
 		private string _parameterBoxContent;
-		public string ParameterBoxContent
-		{
+		public string ParameterBoxContent {
 			get { return _parameterBoxContent; }
 			set {
 				if (_parameterBoxContent == value) return;
@@ -62,8 +67,7 @@ namespace Rico.ViewModels
 			}
 		}
 		private ObservableCollection<Parameter> _parametersCollection;
-		public ObservableCollection<Parameter> ParametersCollection
-		{
+		public ObservableCollection<Parameter> ParametersCollection {
 			get {
 				return _parametersCollection;
 			}
@@ -74,8 +78,7 @@ namespace Rico.ViewModels
 			}
 		}
 		private Parameter _parametersCollectionSelectedItem;
-		public Parameter ParametersCollectionSelectedItem
-		{
+		public Parameter ParametersCollectionSelectedItem {
 			get {
 				return _parametersCollectionSelectedItem;
 			}
@@ -86,8 +89,7 @@ namespace Rico.ViewModels
 			}
 		}
 		private string _statusBarContent;
-		public string StatusBarContent
-		{
+		public string StatusBarContent {
 			get {
 				return _statusBarContent;
 			}
@@ -122,12 +124,12 @@ namespace Rico.ViewModels
 			foreach (var item in ParametersCollection) {
 				if (item.ParameterName == ParameterBoxContent) {
 					StatusBarContent = "Parâmetro já foi adicionado à lista";
-					ParameterBoxContent = "";
+					ParameterBoxContent = string.Empty;
 					return;
 				}
 			}
 			ParametersCollection.Add(new Parameter { ParameterName = ParameterBoxContent });
-			ParameterBoxContent = "";
+			ParameterBoxContent = string.Empty;
 			StatusBarContent = "Added successfuly";
 		}
 		private bool CanRemoveParameter()
@@ -151,49 +153,85 @@ namespace Rico.ViewModels
 		}
 		public void CollectValues()
 		{
-			var parametersNotFound = "";
-			var duplicatedParameters = "";
-			var amountOfParametersNotFound = 0;
-			var amountOfDuplicates = 0;
-			var parameterWithNotEnoughChars = false;
-			ValidateListedParameters(ref parametersNotFound, ref duplicatedParameters, ref amountOfParametersNotFound, ref amountOfDuplicates, ref parameterWithNotEnoughChars);
-			if (amountOfParametersNotFound > 0 || amountOfDuplicates > 0 || parameterWithNotEnoughChars == true) {
-				DisplayParametersErrorMessages(parametersNotFound, duplicatedParameters, amountOfParametersNotFound, amountOfDuplicates, parameterWithNotEnoughChars);
+			foreach (var item in ParametersCollection) {
+				_listOfParameters.Add(item.ParameterName + " =");
+			}
+			GetPathsOfParametersFiles();
+			foreach (var parameter in _listOfParameters) {
+				var paramProperties = new ParameterProperties();
+				foreach (var file in Document.YieldReturnLinesFromFile(_parametersFilesPaths)) {
+					_machineParametersFilePath = file;
+					var validationProperties = ValidateListedParameters();
+					if (validationProperties.amountOfParametersNotFound > 0 || validationProperties.amountOfDuplicates > 0) {
+						DisplayParametersErrorMessages(validationProperties);
+						StatusBarContent = "Error collecting values";
+						return;
+					}
+					CollectValidParameters(parameter, paramProperties);
+					MessageBox.Show(paramProperties.parameterName + "=" + paramProperties.parameterAverage);
+				}
+				SaveParameterToCSV(paramProperties.parameterName, paramProperties.parameterAverage.ToString());
+			}
+			StatusBarContent = "Collected successfuly";
+		}
+		private void CollectValidParameters(string parameterFromList, ParameterProperties paramProperties)
+		{
+			var parameterLine = GetParameterFromFile(parameterFromList);
+
+			if (string.IsNullOrWhiteSpace(parameterLine) || !parameterLine.Contains('=')) return;
+
+			paramProperties.numberOfParametersFound++;
+			paramProperties.foundParameter = true;
+			var parameterNameAndValue = GetParameterNameAndValue(parameterLine);
+			var parameterValueAsDouble = 0.0;
+			var tryParseSuccessful = double.TryParse(parameterNameAndValue.Item2, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out parameterValueAsDouble);
+
+			if (paramProperties.foundParameter == false || !tryParseSuccessful) {
+				StatusBarContent = $"Error collecting values on parameter {parameterNameAndValue.Item1}";
+				return;
 			}
 			else {
-				foreach (var item in ParametersCollection) {
-					var parameterLine = GetParameterFromFile(item.ParameterName);
-					var parameterNameAndValue = HandleParameterValue(parameterLine);
-					SaveParameterToCSV(parameterNameAndValue);
-				}
-				StatusBarContent = "Collected successfuly";
+				paramProperties.parameterAverage += parameterValueAsDouble;
+				paramProperties.parameterAverage /= paramProperties.numberOfParametersFound;
 			}
 		}
-		private void ValidateListedParameters(ref string parametersNotFound, ref string duplicatedParameters, ref int amountOfParametersNotFound, ref int amountOfDuplicates, ref bool parameterWithNotEnoughChars)
+		public void GetPathsOfParametersFiles()
 		{
-			foreach (var item in ParametersCollection) {
-				if (CheckMinimumAmountOfCharacters(item.ParameterName) == false) parameterWithNotEnoughChars = true;
-				if (FoundOccurrenceOfParameter(item.ParameterName) == false) {
-					amountOfParametersNotFound++;
-					parametersNotFound += ("->" + item.ParameterName + "\n");
+			if (InitialPathBoxContent == null) {
+				StatusBarContent = "Please input initial path";
+				return;
+			}
+			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories);
+			Document.WriteToFile(_parametersFilesPaths, paths);
+		}
+		private ParameterValidation ValidateListedParameters()
+		{
+			var paramValidation = new ParameterValidation();
+			foreach (var parameter in _listOfParameters) {
+				if (FoundOccurrenceOfParameter(parameter) == false) {
+					paramValidation.amountOfParametersNotFound++;
+					paramValidation.parametersNotFound += ("->" + parameter + "\n");
 				}
-				if (FindDuplicateParametersInFile(item.ParameterName) == true) {
-					amountOfDuplicates++;
-					duplicatedParameters += ("->" + item.ParameterName + "\n");
+				if (FindDuplicateParametersInFile(parameter) == true) {
+					paramValidation.amountOfDuplicates++;
+					paramValidation.duplicatedParameters += ("->" + parameter + "\n");
 				}
 			}
-		}
-		private bool CheckMinimumAmountOfCharacters(string parameter)
-		{// Return true for enough chars
-			var array = parameter.Split(',');
-			if (array[0].Length > 2) return true;
-			return false;
+			return paramValidation;
 		}
 		private bool FoundOccurrenceOfParameter(string parameter)
 		{// Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
 			var array = parameter.Split(',');
-			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (item.Contains(array[0]) && item.Contains(array[array.Length - 1])) return true;
+			var arrayNotNullOrEmpty = (array.Count() < 1);
+			foreach (var item in Document.YieldReturnLinesFromFile(_baseMachineParameters)) {
+				if (arrayNotNullOrEmpty) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
+						return true;
+				}
+				else {
+					if (item.Contains(parameter))
+						return true;
+				}
 			}
 			return false;
 		}
@@ -201,49 +239,59 @@ namespace Rico.ViewModels
 		{// Returns TRUE if finds duplicates of the parameter passed
 			var found = 0;
 			var array = parameter.Split(',');
-			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (item.Contains(array[0]) && item.Contains(array[array.Length - 1])) {
-					if (++found > 1) return true;
+			var arrayNotNullOrEmpty = (array.Count() < 1);
+			foreach (var item in Document.YieldReturnLinesFromFile(_baseMachineParameters)) {
+				if (arrayNotNullOrEmpty) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
+						if (++found > 1) return true;
+				}
+				else {
+					if (item.Contains(parameter))
+						if (++found > 1) return true;
 				}
 			}
 			return false;
 		}
-		private void DisplayParametersErrorMessages(string parametersNotFound, string duplicatedParameters, int amountOfParametersNotFound, int amountOfDuplicates, bool parameterWithNotEnoughChars)
+		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
 		{
-			if (parameterWithNotEnoughChars == true)
-				MessageBox.Show("Parameters needs to have more than 3 characters");
-			if (amountOfParametersNotFound > 0) {
+			if (paramValidation.amountOfParametersNotFound > 0) {
 				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
-					parametersNotFound + "Por favor verifique o texto inserido");
+					paramValidation.parametersNotFound + "Por favor verifique o texto inserido");
 			}
-			if (amountOfDuplicates > 0) {
+			if (paramValidation.amountOfDuplicates > 0) {
 				MessageBox.Show("Encontrou mais do que 1 ocorrência do(s) seguinte(s) parâmetro(s):\n" +
-					duplicatedParameters + "Por favor especifique o código do parâmetro (ex: 'parâm,cód')");
+					paramValidation.duplicatedParameters + "Por favor verifique o parâmetro introduzido");
 			}
 		}
 		private string GetParameterFromFile(string originalParameter)
 		{
 			var array = originalParameter.Split(',');
+			var arrayNotNullOrEmpty = (array.Count() < 1);
 			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (item.Contains(array[0]) && item.Contains(array[array.Length - 1])) return item;
+				if (arrayNotNullOrEmpty) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
+						return item;
+				}
+				else {
+					if (item.Contains(originalParameter))
+						return item;
+				}
 			}
-			return "";
+			return string.Empty;
 		}
-		private Tuple<string, string> HandleParameterValue(string parameterLine)
+		private Tuple<string, string> GetParameterNameAndValue(string parameterLine)
 		{// Receives the entire line of the parameter and returns a tuple with the name and the value
-			if (string.IsNullOrEmpty(parameterLine)) return new Tuple<string, string>("", "");
-
-			if (!parameterLine.Contains('=')) return new Tuple<string, string>("", "");
-
 			int index = parameterLine.IndexOf('=');
 			var parameterName = parameterLine.Remove(index);
 			parameterLine = parameterLine.Substring(index + 1).Trim();
-			var parameterValue = Regex.Split(parameterLine, @"[^0-9\.]+").Where(c => c != "." && c.Trim() != "").First();
+			var parameterValue = Regex.Split(parameterLine, @"[^0-9\.]+")
+										.Where(c => c != "." && c.Trim() != "")
+										.First();
 			return new Tuple<string, string>(parameterName, parameterValue);
 		}
-		private void SaveParameterToCSV(Tuple<string, string> parameterNameAndValue)
+		private void SaveParameterToCSV(string parameterName, string parameterValue)
 		{
-			Document.AppendToFile(_CSVFilePath, parameterNameAndValue.Item1 + ";" + parameterNameAndValue.Item2 + "\n");
+			Document.AppendToFile(_CSVFilePath, parameterName + ";" + parameterValue + "\n");
 		}
 		#endregion
 	}
