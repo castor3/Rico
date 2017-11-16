@@ -6,7 +6,7 @@
     <Window.Resources>
         <vm:ParametersViewModel x:Key="viewModel"/>
         <DataTemplate x:Key="templateLista">
-            <Label Content="{Binding Path=ParameterName}"/>
+            <Label Content="{Binding Path=Name}"/>
         </DataTemplate>
         <Style TargetType="TextBlock">
             <Setter Property="Foreground" Value="White"/>

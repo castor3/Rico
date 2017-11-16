@@ -6,4 +6,4 @@
 4 - Implement Caliburn.Micro																		<<<DONE>>>
 5 - Implement SupportFiles.dll																		<<<DONE>>>
 6 - Manter a verificação da existência de "," no nome do parâmetro									<<<DONE>>>
-7 - 
+7 - Add timer to prevent messages from overriding eachother

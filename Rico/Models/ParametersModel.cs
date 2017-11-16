@@ -10,14 +10,17 @@ namespace Rico.Models
 {
 	public class Parameter
 	{
-		private string _parameterName;
-		public string ParameterName
+		private string _name;
+		public string Name
 		{
-			get { return _parameterName; }
+			get { return _name; }
 			set {
-				if (_parameterName != value)
-					_parameterName = value;
+				if (_name != value)
+					_name = value;
 			}
 		}
+		public double Average { get; set; }
+		public int NumberOfOcurrencesFound { get; set; }
+		public bool DidFindParameter { get; set; }
 	}
 }

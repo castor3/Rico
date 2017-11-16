@@ -8,10 +8,10 @@ namespace Rico
 {
 	public class ParameterValidation
 	{
-		public string parametersNotFound { get; set; }
-		public string duplicatedParameters { get; set; }
-		public int amountOfParametersNotFound { get; set; }
-		public int amountOfDuplicates { get; set; }
+		public string ParametersNotFound { get; set; }
+		public string DuplicatedParameters { get; set; }
+		public int NumberOfParametersNotFound { get; set; }
+		public int NumberOfDuplicates { get; set; }
 		//public bool parameterWithNotEnoughChars { get; set; }
 
 		//public bool CheckMinimumAmountOfCharacters(string parameter, int minLength = 2)
