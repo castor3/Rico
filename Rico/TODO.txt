@@ -7,3 +7,6 @@
 5 - Implement SupportFiles.dll																		<<<DONE>>>
 6 - Manter a verificação da existência de "," no nome do parâmetro									<<<DONE>>>
 7 - Add timer to prevent messages from overriding eachother
+8 - Fix CSV separator symbol (change ';' to ',')													<<<DONE>>>
+9 - Create scopes to shorten lifecycle of variables													<<<Very rarely makes sense to do this>>>
+10 - Correct concatenation of the parameter name

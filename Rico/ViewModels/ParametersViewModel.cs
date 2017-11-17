@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Collections.Generic;
 using Rico.Models;
 using SupportFiles;
+using System.Text;
 
 namespace Rico.ViewModels
 {
@@ -18,10 +19,11 @@ namespace Rico.ViewModels
 		public ParametersViewModel()
 		{
 			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { Name = "219" },	// P-ganho
+				new Parameter { Name = "219" },				// P-ganho
 				//new Parameter { ParameterName = "118" },	// I-ganho
-				new Parameter { Name = "TR" },		// Correção Referência ferram.
-				new Parameter { Name = "374" },
+				new Parameter { Name = "TR" },				// Correção Referência ferram.
+				new Parameter { Name = "374" },				// Ganho de paralelismo
+				new Parameter { Name = "1496" },			// Maximum Y1Y2 difference
 				//new Parameter { ParameterName = "Cursos" },
 				//new Parameter { ParameterName = "Coisas" },
 				//new Parameter { ParameterName = "Parametro" },
@@ -41,6 +43,7 @@ namespace Rico.ViewModels
 
 		string _machineParametersFilePath = string.Empty;
 		IList<string> _listOfParameters = new List<string>();
+		bool _firstCycle = true;
 		#endregion
 
 		#region Properties
@@ -52,8 +55,7 @@ namespace Rico.ViewModels
 		public string InitialPathBoxContent
 		{
 			get { return _initialPathBoxContent; }
-			set
-			{
+			set {
 				if (_initialPathBoxContent == value) return;
 				_initialPathBoxContent = value;
 				RaisePropertyChanged(nameof(InitialPathBoxContent));
@@ -63,8 +65,7 @@ namespace Rico.ViewModels
 		public string ParameterBoxContent
 		{
 			get { return _parameterBoxContent; }
-			set
-			{
+			set {
 				if (_parameterBoxContent == value) return;
 				_parameterBoxContent = value;
 				RaisePropertyChanged(nameof(ParameterBoxContent));
@@ -73,12 +74,10 @@ namespace Rico.ViewModels
 		private ObservableCollection<Parameter> _parametersCollection;
 		public ObservableCollection<Parameter> ParametersCollection
 		{
-			get
-			{
+			get {
 				return _parametersCollection;
 			}
-			set
-			{
+			set {
 				if (_parametersCollection == value) return;
 				_parametersCollection = value;
 				RaisePropertyChanged(nameof(ParametersCollection));
@@ -87,12 +86,10 @@ namespace Rico.ViewModels
 		private Parameter _parametersCollectionSelectedItem;
 		public Parameter ParametersCollectionSelectedItem
 		{
-			get
-			{
+			get {
 				return _parametersCollectionSelectedItem;
 			}
-			set
-			{
+			set {
 				if (_parametersCollectionSelectedItem == value) return;
 				_parametersCollectionSelectedItem = value;
 				RaisePropertyChanged(nameof(ParametersCollectionSelectedItem));
@@ -101,12 +98,10 @@ namespace Rico.ViewModels
 		private string _statusBarContent;
 		public string StatusBarContent
 		{
-			get
-			{
+			get {
 				return _statusBarContent;
 			}
-			set
-			{
+			set {
 				if (_statusBarContent == value) return;
 				_statusBarContent = value;
 				RaisePropertyChanged(nameof(StatusBarContent));
@@ -173,7 +168,9 @@ namespace Rico.ViewModels
 			GetPathsOfParametersFiles();
 			foreach (var parameterFromList in _listOfParameters) {
 				var parameter = new Parameter();
+				_firstCycle = true;
 				foreach (var file in Document.YieldReturnLinesFromFile(_parametersFilesPaths)) {
+					//MessageBox.Show(file);
 					_machineParametersFilePath = file;
 					var validationProperties = ValidateListedParameters();
 					if (validationProperties.NumberOfParametersNotFound > 0 || validationProperties.NumberOfDuplicates > 0) {
@@ -182,36 +179,57 @@ namespace Rico.ViewModels
 						return;
 					}
 					CollectValidParameter(parameterFromList, parameter);
-					MessageBox.Show(parameter.Name + " = " + parameter.Average);
+					//MessageBox.Show(parameter.Name + " = " + parameter.Average);
 				}
+				parameter.Name = RemoveDiacritics(parameter.Name);
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
+			Document.AppendToFile(_CSVFilePath, "\n");
 			StatusBarContent = "Collected successfuly";
 		}
 		private void CollectValidParameter(string parameterFromList, Parameter parameter)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			var parameterValueAsDouble = 0.0;
+			var parameterValueAsDouble = 0.0d;
 			var tryParseSuccessful = false;
-            var parameterLine = GetParameterFromFile(parameterFromList);
-
+			var parameterLine = GetParameterFromFile(parameterFromList);
 			if (string.IsNullOrWhiteSpace(parameterLine) || !parameterLine.Contains('=')) return;
 
 			parameter.NumberOfOcurrencesFound++;
 			parameter.DidFindParameter = true;
-			var parameterNameAndValue = GetParameterNameAndValue(parameterLine);
-			if (parameterNameAndValue == null) parameter.DidFindParameter = false;
-			else {
-				parameter.Name = parameterNameAndValue.Item1;
-				tryParseSuccessful = double.TryParse(parameterNameAndValue.Item2, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out parameterValueAsDouble);
+
+			if (_firstCycle) {
+				parameter.Name = GetParameterName(parameterLine);
+				_firstCycle = false;
 			}
+
+			var parameterValue = GetParameterValue(parameterLine);
+
+			if (parameterValue == null)
+				parameter.DidFindParameter = false;
+			else {
+				tryParseSuccessful = double.TryParse(parameterValue, out parameterValueAsDouble);
+			}
+
 			if (!parameter.DidFindParameter || !tryParseSuccessful) {
-				StatusBarContent = $"Error collecting values on parameter {parameterNameAndValue.Item1}";
+				StatusBarContent = $"Error collecting values on parameter {parameter.Name}";
 				return;
 			}
 			else {
 				parameter.Average += parameterValueAsDouble;
 				parameter.Average /= parameter.NumberOfOcurrencesFound;
 			}
+		}
+		private string GetParameterName(string parameterLine)
+		{
+			var regexResult = Regex.Match(parameterLine, @" {2}(([\w\-]+ ?)+) +(\w+)");
+			if (!regexResult.Success) return string.Empty;
+
+			var parameterName = string.Empty;
+			for (int i = 0; i < regexResult.Groups.Count; i++) {
+				parameterName = regexResult.Groups[i].Value;
+			}
+			parameterName += "(" + regexResult.Groups[regexResult.Groups.Count - 1].Value + ")";
+			return parameterName;
 		}
 		private void GetPathsOfParametersFiles()
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
@@ -228,7 +246,7 @@ namespace Rico.ViewModels
 		 // Why: To know if it's OK to proceed with retrieving the parameter name and value from the file
 			var paramValidation = new ParameterValidation();
 			foreach (var parameter in _listOfParameters) {
-				if (SearchForParameterInFile(parameter) == false) {
+				if (CheckIfParameterExistsInFile(parameter) == false) {
 					paramValidation.NumberOfParametersNotFound++;
 					paramValidation.ParametersNotFound += ("->" + parameter + "\n");
 				}
@@ -239,7 +257,7 @@ namespace Rico.ViewModels
 			}
 			return paramValidation;
 		}
-		private bool SearchForParameterInFile(string parameter)
+		private bool CheckIfParameterExistsInFile(string parameter)
 		{// What: Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
 		 // Why: To know if the parameter exists in the file
 			var array = parameter.Split(',');
@@ -258,6 +276,8 @@ namespace Rico.ViewModels
 		}
 		private bool SearchForDuplicatedParameterInFile(string parameter)
 		{// Returns TRUE if finds duplicates of the parameter passed
+		 // Why: We can only get the value of each parameter, once from each file. If it finds the same parameter
+		 //		more than once, there's something wrong, and so the user will have to rechecked what he typed
 			var found = 0;
 			var array = parameter.Split(',');
 			var arrayNotNullOrEmpty = (array.Count() < 1);
@@ -285,7 +305,7 @@ namespace Rico.ViewModels
 			}
 		}
 		private string GetParameterFromFile(string originalParameter)
-		{
+		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = originalParameter.Split(',');
 			var arrayNotNullOrEmpty = (array.Count() < 1);
 			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
@@ -300,22 +320,32 @@ namespace Rico.ViewModels
 			}
 			return string.Empty;
 		}
-		private Tuple<string, string> GetParameterNameAndValue(string parameterLine)
+		private string GetParameterValue(string parameterLine)
 		{// Receives the entire line of the parameter and returns a tuple with the name and the value
-			int index = parameterLine.IndexOf('=');
-			var auxName = parameterLine.Remove(index);
+			byte index = (byte)parameterLine.IndexOf('=');
 			parameterLine = parameterLine.Substring(index + 1).Trim();
-			var regexResult = Regex.Match(parameterLine, @" {2}(([\w\-]+ ?)+) +(\w+)");
-			if (!regexResult.Success) return default(Tuple<string, string>);
-			var parameterName = regexResult.Groups[1].Value + regexResult.Groups[regexResult.Groups.Count - 1].Value;
 			var parameterValue = Regex.Split(parameterLine, @"[^0-9\.]+")
 										.Where(c => c != "." && c.Trim() != "")
 										.First();
-			return new Tuple<string, string>(parameterName, parameterValue);
+			return parameterValue;
+		}
+		private string RemoveDiacritics(string text)
+		{// Replaces accented letters with equivalent ones (normalizes the string)
+			var normalizedString = text.Normalize(NormalizationForm.FormD);
+			var stringBuilder = new StringBuilder();
+
+			foreach (var character in normalizedString) {
+				var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(character);
+				if (unicodeCategory != UnicodeCategory.NonSpacingMark) {
+					stringBuilder.Append(character);
+				}
+			}
+			return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
 		}
 		private void SaveParameterToCSV(string parameterName, string parameterValue)
 		{
-			Document.AppendToFile(_CSVFilePath, parameterName + ";" + parameterValue + "\n");
+			var valueToSave = parameterName + "," + parameterValue + "\n";
+			Document.AppendToFile(_CSVFilePath, valueToSave);
 		}
 		#endregion
 	}

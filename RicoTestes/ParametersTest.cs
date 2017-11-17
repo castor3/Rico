@@ -26,7 +26,7 @@ namespace RicoTestes
 			viewModel.AddParameter();
 			var intermediateCount = viewModel.ParametersCollection.Count;
 			if (intermediateCount == initialCount) Assert.Fail();
-			viewModel.ParametersCollectionSelectedItem = new Parameter { ParameterName = "test" };
+			viewModel.ParametersCollectionSelectedItem = new Parameter { Name = "test" };
 			viewModel.RemoveParameter();
 			var finalCount = viewModel.ParametersCollection.Count;
 			Assert.AreEqual(initialCount, finalCount);
