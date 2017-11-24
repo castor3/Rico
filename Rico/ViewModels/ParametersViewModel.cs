@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using Rico.Models;
 using SupportFiles;
 using System.Text;
+using System.Windows.Threading;
 
 namespace Rico.ViewModels
 {
@@ -19,31 +20,25 @@ namespace Rico.ViewModels
 		public ParametersViewModel()
 		{
 			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { Name = "219" },				// P-ganho
-				//new Parameter { ParameterName = "118" },	// I-ganho
-				new Parameter { Name = "TR" },				// Correção Referência ferram.
-				new Parameter { Name = "374" },				// Ganho de paralelismo
+				new Parameter { Name = "3895" },			// P-ganho
+				new Parameter { Name = "3915" },			// Ganho de paralelismo
 				new Parameter { Name = "1496" },			// Maximum Y1Y2 difference
-				//new Parameter { ParameterName = "Cursos" },
-				//new Parameter { ParameterName = "Coisas" },
-				//new Parameter { ParameterName = "Parametro" },
-				//new Parameter { ParameterName = "Parametro1" },
+				new Parameter { Name = "4960" },			// Pressão (subindo)
 			};
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
 			RemoveParameterCommand = new RelayCommand(CanRemoveParameter, RemoveParameter);
 			CollectValuesCommand = new RelayCommand(CanCollectValues, CollectValues);
-			StatusBarContent = "Inicio";
 		}
 
 		#region Fields
 		readonly Parameter _model = new Parameter();
-		readonly string _baseMachineParameters = "MachineParameters.txt";
+		readonly string _baseMachineParameters = "machineParameters.txt";
 		readonly string _parametersFilesPaths = "machinepaths.txt";
 		readonly string _CSVFilePath = "parameters_values.csv";
 
 		string _machineParametersFilePath = string.Empty;
 		IList<string> _listOfParameters = new List<string>();
-		bool _firstCycle = true;
+		bool _isFirstCycle = true;
 		#endregion
 
 		#region Properties
@@ -51,7 +46,7 @@ namespace Rico.ViewModels
 		public ICommand RemoveParameterCommand { get; }
 		public ICommand CollectValuesCommand { get; }
 
-		private string _initialPathBoxContent;
+		private string _initialPathBoxContent = Directory.GetCurrentDirectory();
 		public string InitialPathBoxContent
 		{
 			get { return _initialPathBoxContent; }
@@ -95,7 +90,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollectionSelectedItem));
 			}
 		}
-		private string _statusBarContent;
+		private string _statusBarContent = "Pronto";
 		public string StatusBarContent
 		{
 			get {
@@ -131,14 +126,14 @@ namespace Rico.ViewModels
 		{
 			foreach (var item in ParametersCollection) {
 				if (item.Name == ParameterBoxContent) {
-					StatusBarContent = "Parâmetro já foi adicionado à lista";
+					UpdateStatusBar("Parâmetro já foi adicionado à lista");
 					ParameterBoxContent = string.Empty;
 					return;
 				}
 			}
 			ParametersCollection.Add(new Parameter { Name = ParameterBoxContent });
 			ParameterBoxContent = string.Empty;
-			StatusBarContent = "Added successfuly";
+			UpdateStatusBar("Added successfully");
 		}
 		private bool CanRemoveParameter()
 		{
@@ -150,7 +145,7 @@ namespace Rico.ViewModels
 			foreach (var item in ParametersCollection) {
 				if (item.Name == ParametersCollectionSelectedItem.Name) {
 					ParametersCollection.Remove(item);
-					StatusBarContent = "Removed successfuly";
+					UpdateStatusBar("Removed successfully");
 					return;
 				}
 			}
@@ -161,85 +156,86 @@ namespace Rico.ViewModels
 		}
 		public void CollectValues()
 		{
-			_listOfParameters.Clear();
+			if (!File.Exists(_baseMachineParameters)) {
+				UpdateStatusBar("There's a file missing");
+				return;
+			}
+			if (_listOfParameters.Any())
+				_listOfParameters.Clear();
 			foreach (var item in ParametersCollection) {
 				_listOfParameters.Add(item.Name + " =");
 			}
-			GetPathsOfParametersFiles();
+			if (string.IsNullOrWhiteSpace(InitialPathBoxContent)) {
+				UpdateStatusBar("Please input initial path");
+				return;
+			}
+			if (!GetPathsOfParametersFiles()) {
+				UpdateStatusBar("Failed to find parameters files");
+				return;
+			}
 			foreach (var parameterFromList in _listOfParameters) {
 				var parameter = new Parameter();
-				_firstCycle = true;
+				_isFirstCycle = true;
 				foreach (var file in Document.YieldReturnLinesFromFile(_parametersFilesPaths)) {
-					//MessageBox.Show(file);
 					_machineParametersFilePath = file;
 					var validationProperties = ValidateListedParameters();
 					if (validationProperties.NumberOfParametersNotFound > 0 || validationProperties.NumberOfDuplicates > 0) {
 						DisplayParametersErrorMessages(validationProperties);
-						StatusBarContent = "Error collecting values";
 						return;
 					}
-					CollectValidParameter(parameterFromList, parameter);
-					//MessageBox.Show(parameter.Name + " = " + parameter.Average);
+					if (!CollectValidParameter(parameterFromList, parameter)) {
+						UpdateStatusBar("Error collecting values");
+						return;
+					}
 				}
-				parameter.Name = RemoveDiacritics(parameter.Name);
+				parameter.Average /= parameter.NumberOfOcurrences;
+				parameter.Name = Text.RemoveDiacritics(parameter.Name);
+				if (parameter.Name == string.Empty) {
+					UpdateStatusBar("Error collecting values");
+					return;
+				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
 			Document.AppendToFile(_CSVFilePath, "\n");
-			StatusBarContent = "Collected successfuly";
+			UpdateStatusBar("Collected successfully");
 		}
-		private void CollectValidParameter(string parameterFromList, Parameter parameter)
+		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
+			parameter.ParameterLine = GetParameterFromFile(parameterFromList);
+			
+			// If the "ParameterLine" is empty is probably because it searched in an incompatible file
+			// Anyway, it will proceed ('return true;') to the next file without throwing an error
+			if (string.IsNullOrWhiteSpace(parameter.ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
+
+			parameter.NumberOfOcurrences++;
+
+			if (_isFirstCycle) {
+				parameter.GetParameterName();
+				_isFirstCycle = false;
+			}
+
+			parameter.GetParameterValue();
+			var parameterValue = parameter.Value;
+
+			if (string.IsNullOrWhiteSpace(parameterValue)) return false;
+
 			var parameterValueAsDouble = 0.0d;
-			var tryParseSuccessful = false;
-			var parameterLine = GetParameterFromFile(parameterFromList);
-			if (string.IsNullOrWhiteSpace(parameterLine) || !parameterLine.Contains('=')) return;
-
-			parameter.NumberOfOcurrencesFound++;
-			parameter.DidFindParameter = true;
-
-			if (_firstCycle) {
-				parameter.Name = GetParameterName(parameterLine);
-				_firstCycle = false;
-			}
-
-			var parameterValue = GetParameterValue(parameterLine);
-
-			if (parameterValue == null)
-				parameter.DidFindParameter = false;
-			else {
-				tryParseSuccessful = double.TryParse(parameterValue, out parameterValueAsDouble);
-			}
-
-			if (!parameter.DidFindParameter || !tryParseSuccessful) {
-				StatusBarContent = $"Error collecting values on parameter {parameter.Name}";
-				return;
+			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
+				UpdateStatusBar($"Error collecting value of parameter: {parameter.Name}");
+				return false;
 			}
 			else {
 				parameter.Average += parameterValueAsDouble;
-				parameter.Average /= parameter.NumberOfOcurrencesFound;
+				return true;
 			}
 		}
-		private string GetParameterName(string parameterLine)
-		{
-			var regexResult = Regex.Match(parameterLine, @" {2}(([\w\-]+ ?)+) +(\w+)");
-			if (!regexResult.Success) return string.Empty;
-
-			var parameterName = string.Empty;
-			for (int i = 0; i < regexResult.Groups.Count; i++) {
-				parameterName = regexResult.Groups[i].Value;
-			}
-			parameterName += "(" + regexResult.Groups[regexResult.Groups.Count - 1].Value + ")";
-			return parameterName;
-		}
-		private void GetPathsOfParametersFiles()
+		private bool GetPathsOfParametersFiles()
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
-			if (InitialPathBoxContent == null) {
-				StatusBarContent = "Please input initial path";
-				return;
-			}
 			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories);
+			if (!paths.Any()) return false;
 			Document.WriteToFile(_parametersFilesPaths, paths);
+			return true;
 		}
 		private ParameterValidation ValidateListedParameters()
 		{// What: Check if the parameter exists in the file and if it does not have duplicates
@@ -259,11 +255,11 @@ namespace Rico.ViewModels
 		}
 		private bool CheckIfParameterExistsInFile(string parameter)
 		{// What: Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
-		 // Why: To know if the parameter exists in the file
+		 // Why: Simply to know if the parameter exists in the file
 			var array = parameter.Split(',');
-			var arrayNotNullOrEmpty = (array.Count() < 1);
+			var arrayIsNotNullOrEmpty = array.Any();
 			foreach (var item in Document.YieldReturnLinesFromFile(_baseMachineParameters)) {
-				if (arrayNotNullOrEmpty) {
+				if (arrayIsNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return true;
 				}
@@ -294,7 +290,7 @@ namespace Rico.ViewModels
 			return false;
 		}
 		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
-		{// !!! Messages will override eachother if they happen to be written to the screen at the same time
+		{// !!! Messages will override each other if they happen to be written to the screen at the same time
 			if (paramValidation.NumberOfParametersNotFound > 0) {
 				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
 					paramValidation.ParametersNotFound + "Por favor verifique o texto inserido");
@@ -307,9 +303,9 @@ namespace Rico.ViewModels
 		private string GetParameterFromFile(string originalParameter)
 		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = originalParameter.Split(',');
-			var arrayNotNullOrEmpty = (array.Count() < 1);
+			var arrayIsNullOrEmpty = !array.Any();
 			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (arrayNotNullOrEmpty) {
+				if (arrayIsNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return item;
 				}
@@ -320,33 +316,33 @@ namespace Rico.ViewModels
 			}
 			return string.Empty;
 		}
-		private string GetParameterValue(string parameterLine)
-		{// Receives the entire line of the parameter and returns a tuple with the name and the value
-			byte index = (byte)parameterLine.IndexOf('=');
-			parameterLine = parameterLine.Substring(index + 1).Trim();
-			var parameterValue = Regex.Split(parameterLine, @"[^0-9\.]+")
-										.Where(c => c != "." && c.Trim() != "")
-										.First();
-			return parameterValue;
-		}
-		private string RemoveDiacritics(string text)
-		{// Replaces accented letters with equivalent ones (normalizes the string)
-			var normalizedString = text.Normalize(NormalizationForm.FormD);
-			var stringBuilder = new StringBuilder();
-
-			foreach (var character in normalizedString) {
-				var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(character);
-				if (unicodeCategory != UnicodeCategory.NonSpacingMark) {
-					stringBuilder.Append(character);
-				}
-			}
-			return stringBuilder.ToString().Normalize(NormalizationForm.FormC);
-		}
 		private void SaveParameterToCSV(string parameterName, string parameterValue)
 		{
 			var valueToSave = parameterName + "," + parameterValue + "\n";
 			Document.AppendToFile(_CSVFilePath, valueToSave);
 		}
+		#region StatusBar
+		// Status bar update
+		private void SetStatusBarTimer()
+		{//  DispatcherTimer setup
+			DispatcherTimer timer = new DispatcherTimer();
+			timer.Tick += new EventHandler(StatusBarTimer_Tick);
+			timer.Interval = new TimeSpan(0, 0, 0, 2, 500);
+			timer.Stop();
+			timer.Start();
+		}
+		private void StatusBarTimer_Tick(object sender, EventArgs e)
+		{
+			DispatcherTimer timer = (DispatcherTimer)sender;
+			timer.Stop();
+			StatusBarContent = "Pronto";
+		}
+		private void UpdateStatusBar(string msg)
+		{
+			StatusBarContent = msg;
+			SetStatusBarTimer();
+		}
+		#endregion
 		#endregion
 	}
 }
