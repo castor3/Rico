@@ -31,9 +31,6 @@ namespace Rico.ViewModels
 		}
 
 		#region Fields
-		readonly Parameter _model = new Parameter();
-		readonly string _baseMachineParameters = "machineParameters.txt";
-		readonly string _parametersFilesPaths = "machinepaths.txt";
 		readonly string _CSVFilePath = "parameters_values.csv";
 
 		string _machineParametersFilePath = string.Empty;
@@ -102,6 +99,10 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
+		readonly string _baseMachineParameters = "machineParameters.txt";
+		public string BaseMachineParameters => _baseMachineParameters;
+		readonly string _parametersFilesPaths = "machinepaths.txt";
+		public string ParametersFilesPaths => _parametersFilesPaths;
 		#endregion
 
 		#region Property changed Event
@@ -156,7 +157,7 @@ namespace Rico.ViewModels
 		}
 		public void CollectValues()
 		{
-			if (!File.Exists(_baseMachineParameters)) {
+			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
 				return;
 			}
@@ -165,10 +166,9 @@ namespace Rico.ViewModels
 			foreach (var item in ParametersCollection) {
 				_listOfParameters.Add(item.Name + " =");
 			}
-			if (string.IsNullOrWhiteSpace(InitialPathBoxContent)) {
-				UpdateStatusBar("Please input initial path");
-				return;
-			}
+			if (string.IsNullOrWhiteSpace(InitialPathBoxContent))
+				InitialPathBoxContent = Directory.GetCurrentDirectory();
+
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
 				return;
@@ -176,7 +176,7 @@ namespace Rico.ViewModels
 			foreach (var parameterFromList in _listOfParameters) {
 				var parameter = new Parameter();
 				_isFirstCycle = true;
-				foreach (var file in Document.YieldReturnLinesFromFile(_parametersFilesPaths)) {
+				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
 					_machineParametersFilePath = file;
 					var validationProperties = ValidateListedParameters();
 					if (validationProperties.NumberOfParametersNotFound > 0 || validationProperties.NumberOfDuplicates > 0) {
@@ -202,7 +202,7 @@ namespace Rico.ViewModels
 		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
 			parameter.ParameterLine = GetParameterFromFile(parameterFromList);
-			
+
 			// If the "ParameterLine" is empty is probably because it searched in an incompatible file
 			// Anyway, it will proceed ('return true;') to the next file without throwing an error
 			if (string.IsNullOrWhiteSpace(parameter.ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
@@ -234,7 +234,7 @@ namespace Rico.ViewModels
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
 			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories);
 			if (!paths.Any()) return false;
-			Document.WriteToFile(_parametersFilesPaths, paths);
+			Document.WriteToFile(ParametersFilesPaths, paths);
 			return true;
 		}
 		private ParameterValidation ValidateListedParameters()
@@ -258,7 +258,7 @@ namespace Rico.ViewModels
 		 // Why: Simply to know if the parameter exists in the file
 			var array = parameter.Split(',');
 			var arrayIsNotNullOrEmpty = array.Any();
-			foreach (var item in Document.YieldReturnLinesFromFile(_baseMachineParameters)) {
+			foreach (var item in Document.YieldReturnLinesFromFile(BaseMachineParameters)) {
 				if (arrayIsNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return true;
@@ -277,7 +277,7 @@ namespace Rico.ViewModels
 			var found = 0;
 			var array = parameter.Split(',');
 			var arrayNotNullOrEmpty = (array.Count() < 1);
-			foreach (var item in Document.YieldReturnLinesFromFile(_baseMachineParameters)) {
+			foreach (var item in Document.YieldReturnLinesFromFile(BaseMachineParameters)) {
 				if (arrayNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						if (++found > 1) return true;

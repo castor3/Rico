@@ -57,7 +57,7 @@ namespace Rico.Models
 			var parameterName = string.Empty;
 			if (regexResult.Groups.Count == 4)
 				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
-			
+
 			Name = parameterName;
 			return true;
 		}
@@ -75,6 +75,10 @@ namespace Rico.Models
 				return false;
 			}
 			return true;
+		}
+		public bool GetParameterCode()
+		{
+
 		}
 	}
 }

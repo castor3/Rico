@@ -16,3 +16,4 @@
 14 - Fix calculate the average																		<<<DONE>>>
 15 - Create test to test multiple arguments, randomly picked
 16 - Create test to test average calculation
+17 - Use current directory if "InitialPathBoxContent" is empty										<<<DONE>>>
