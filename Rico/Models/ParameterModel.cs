@@ -40,19 +40,25 @@ namespace Rico.Models
 		}
 		public double Average { get; set; }
 		public int NumberOfOcurrences { get; set; }
+		private string _code;
+		public string Code
+		{
+			get {
+				return _code;
+			}
+			set {
+				if (_code != value)
+					_code = value;
+			}
+		}
+
 		//public bool DidFindParameter { get; set; }
 
 		// Methods
 		public bool GetParameterName()
 		{
-			Match regexResult;
-			try {
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-]+\s?)+)\s+(\w+)");
-			}
-			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return false;
-			}
-			if (!regexResult.Success) return false;
+			var regexResult = RegexNameAndCode();
+			if (regexResult == null) return false;
 
 			var parameterName = string.Empty;
 			if (regexResult.Groups.Count == 4)
@@ -78,7 +84,28 @@ namespace Rico.Models
 		}
 		public bool GetParameterCode()
 		{
+			var regexResult = RegexNameAndCode();
+			if (regexResult == null) return false;
 
+			var parameterCode = string.Empty;
+			if (regexResult.Groups.Count == 4)
+				parameterCode = regexResult.Groups[3].Value;
+
+			Code = parameterCode;
+			return true;
+		}
+
+		private Match RegexNameAndCode()
+		{
+			Match regexResult;
+			try {
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.]+\s?)+)\s+(\w+)");
+			}
+			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
+				return null;
+			}
+			if (!regexResult.Success) return null;
+			return regexResult;
 		}
 	}
 }

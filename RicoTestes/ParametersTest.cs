@@ -6,6 +6,7 @@ using Rico.Models;
 using Rico.ViewModels;
 using SupportFiles;
 using System.Linq;
+using System.IO;
 
 namespace RicoTestes
 {
@@ -58,30 +59,46 @@ namespace RicoTestes
 			viewModel.AddParameter();
 			Assert.IsTrue(string.IsNullOrEmpty(viewModel.ParameterBoxContent));
 		}
-		[TestMethod]
-		public void TestAverageCalculation()
-		{// Randomly picks multiple parameters to test
-			ParametersViewModel viewModel = new ParametersViewModel();
+		//[TestMethod]
+		//public void TestAverageCalculation()
+		//{// Randomly picks multiple parameters to test
+		//	ParametersViewModel viewModel = new ParametersViewModel();
 
-		}
+		//}
 		[TestMethod]
 		public void TestMultipleParameters()
-		{// Randomly picks multiple parameters to test
+		{// Randomly picks 50 parameters to test
+			const int numberOfParametersToTest = 50;
 			ParametersViewModel viewModel = new ParametersViewModel();
 			var lines = new string[50];
+			var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
+
+			var linesFromFile = new Collection<string>();
+			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
+				if (string.IsNullOrWhiteSpace(item) || !item.Contains('='))
+					continue;
+				else
+					linesFromFile.Add(item);
+			}
+
+			if (!linesFromFile.Any()) Assert.Fail();
+
+			//var tempLinesFromFile = tempLinesFromFile.ToArray();
+			var random = new Random();
+			var randomValue = 0;
+			var auxString = string.Empty;
+			for (int i = 0; i < numberOfParametersToTest; i++) {
+				randomValue = random.Next(linesFromFile.Count - 1);
+				lines[i] = Text.RemoveDiacritics(linesFromFile[randomValue - 1]);
+			}
+
 			viewModel.ParametersCollection.Clear();
-			IEnumerable<string> tempLinesFromFile = new Collection<string>();
-			Document.ReadFromFile(viewModel.BaseMachineParameters, out tempLinesFromFile);
-			var linesFromFile = tempLinesFromFile.ToArray(); 
-			for (int i = 0; i < 49; i++) {
-				var randomLine = new Random().Next(1050);
-				lines[i] = linesFromFile[randomLine - 1];
-			}
-			var parameterModel = new Parameter();
 			foreach (var line in lines) {
-				parameterModel.GetParameterName
+				var parameter = new Parameter();
+				parameter.ParameterLine = line;
+				parameter.GetParameterCode();
+				viewModel.ParametersCollection.Add(parameter);
 			}
-			viewModel.ParametersCollection=
 			viewModel.CollectValues();
 		}
 	}

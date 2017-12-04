@@ -99,7 +99,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
-		readonly string _baseMachineParameters = "machineParameters.txt";
+		readonly string _baseMachineParameters = "machineparameters.txt";
 		public string BaseMachineParameters => _baseMachineParameters;
 		readonly string _parametersFilesPaths = "machinepaths.txt";
 		public string ParametersFilesPaths => _parametersFilesPaths;
