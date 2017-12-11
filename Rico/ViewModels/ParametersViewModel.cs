@@ -103,6 +103,8 @@ namespace Rico.ViewModels
 		public string BaseMachineParameters => _baseMachineParameters;
 		readonly string _parametersFilesPaths = "machinepaths.txt";
 		public string ParametersFilesPaths => _parametersFilesPaths;
+		private string _nameOfFileToSearch;
+		public string NameOfFileToSearch => _nameOfFileToSearch;
 		#endregion
 
 		#region Property changed Event
