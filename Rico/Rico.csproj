@@ -133,5 +133,8 @@
   <ItemGroup>
     <Resource Include="Resources\App_Logo.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="README.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

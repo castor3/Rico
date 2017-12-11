@@ -20,10 +20,10 @@ namespace Rico.ViewModels
 		public ParametersViewModel()
 		{
 			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { Name = "3895" },			// P-ganho
-				new Parameter { Name = "3915" },			// Ganho de paralelismo
-				new Parameter { Name = "1496" },			// Maximum Y1Y2 difference
-				new Parameter { Name = "4960" },			// Pressão (subindo)
+				new Parameter { Code = "3895" },			// P-ganho
+				new Parameter { Code = "3915" },			// Ganho de paralelismo
+				new Parameter { Code = "1496" },			// Maximum Y1Y2 difference
+				new Parameter { Code = "4960" },			// Pressão (subindo)
 			};
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
 			RemoveParameterCommand = new RelayCommand(CanRemoveParameter, RemoveParameter);
@@ -34,7 +34,8 @@ namespace Rico.ViewModels
 		readonly string _CSVFilePath = "parameters_values.csv";
 
 		string _machineParametersFilePath = string.Empty;
-		IList<string> _listOfParameters = new List<string>();
+		IList<string> _listOfParametersCode = new List<string>();
+		IEnumerable<string> _listOfValidParameters;
 		bool _isFirstCycle = true;
 		#endregion
 
@@ -99,7 +100,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
-		readonly string _baseMachineParameters = "machineparameters.txt";
+		readonly string _baseMachineParameters = "Parameters.txt";
 		public string BaseMachineParameters => _baseMachineParameters;
 		readonly string _parametersFilesPaths = "machinepaths.txt";
 		public string ParametersFilesPaths => _parametersFilesPaths;
@@ -163,11 +164,14 @@ namespace Rico.ViewModels
 				UpdateStatusBar("There's a file missing");
 				return;
 			}
-			if (_listOfParameters.Any())
-				_listOfParameters.Clear();
-			foreach (var item in ParametersCollection) {
-				_listOfParameters.Add(item.Name + " =");
+			
+			if (_listOfParametersCode.Any())
+				_listOfParametersCode.Clear();
+			
+				foreach (var item in ParametersCollection) {
+				_listOfParametersCode.Add(item.Code + " =");
 			}
+			
 			if (string.IsNullOrWhiteSpace(InitialPathBoxContent))
 				InitialPathBoxContent = Directory.GetCurrentDirectory();
 
@@ -175,16 +179,20 @@ namespace Rico.ViewModels
 				UpdateStatusBar("Failed to find parameters files");
 				return;
 			}
-			foreach (var parameterFromList in _listOfParameters) {
+			
+			var validationProperties = ValidateListedParameters();
+			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
+				DisplayParametersErrorMessages(validationProperties);
+				return;
+			}
+
+			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
+
+			foreach (var parameterFromList in _listOfValidParameters) {
 				var parameter = new Parameter();
 				_isFirstCycle = true;
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
 					_machineParametersFilePath = file;
-					var validationProperties = ValidateListedParameters();
-					if (validationProperties.NumberOfParametersNotFound > 0 || validationProperties.NumberOfDuplicates > 0) {
-						DisplayParametersErrorMessages(validationProperties);
-						return;
-					}
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar("Error collecting values");
 						return;
@@ -243,14 +251,14 @@ namespace Rico.ViewModels
 		{// What: Check if the parameter exists in the file and if it does not have duplicates
 		 // Why: To know if it's OK to proceed with retrieving the parameter name and value from the file
 			var paramValidation = new ParameterValidation();
-			foreach (var parameter in _listOfParameters) {
-				if (CheckIfParameterExistsInFile(parameter) == false) {
+			foreach (var parameterCode in _listOfParametersCode) {
+				if (!CheckIfParameterExistsInFile(parameterCode)) {
 					paramValidation.NumberOfParametersNotFound++;
-					paramValidation.ParametersNotFound += ("->" + parameter + "\n");
+					paramValidation.ParametersNotFound += (parameterCode + "\n");
 				}
-				if (SearchForDuplicatedParameterInFile(parameter) == true) {
+				if (SearchForDuplicatedParameterInFile(parameterCode)) {
 					paramValidation.NumberOfDuplicates++;
-					paramValidation.DuplicatedParameters += ("->" + parameter + "\n");
+					paramValidation.DuplicatedParameters.Add(parameterCode);
 				}
 			}
 			return paramValidation;
@@ -297,10 +305,10 @@ namespace Rico.ViewModels
 				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
 					paramValidation.ParametersNotFound + "Por favor verifique o texto inserido");
 			}
-			if (paramValidation.NumberOfDuplicates > 0) {
-				MessageBox.Show("Encontrou mais do que 1 ocorrência do(s) seguinte(s) parâmetro(s):\n" +
-					paramValidation.DuplicatedParameters + "Por favor verifique o parâmetro introduzido");
-			}
+			//if (paramValidation.NumberOfDuplicates > 0) {
+			//	MessageBox.Show("Encontrou mais do que 1 ocorrência do(s) seguinte(s) parâmetro(s):\n" +
+			//		paramValidation.DuplicatedParameters + "Por favor verifique o parâmetro introduzido");
+			//}
 		}
 		private string GetParameterFromFile(string originalParameter)
 		{// Retrieves, from the parameters file, the full line of the parameter passed

@@ -51,8 +51,12 @@ namespace Rico.Models
 					_code = value;
 			}
 		}
-
-		//public bool DidFindParameter { get; set; }
+		private bool ignore;
+		public bool Ignore
+		{
+			get { return ignore; }
+			set { ignore = value; }
+		}
 
 		// Methods
 		public bool GetParameterName()
@@ -94,12 +98,12 @@ namespace Rico.Models
 			Code = parameterCode;
 			return true;
 		}
-
 		private Match RegexNameAndCode()
 		{
 			Match regexResult;
 			try {
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.]+\s?)+)\s+(\w+)");
+				// escapes -> -  .  ,  /  \  "  )  ( 
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(]+\s{0,2})+)\s+(\w+)");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
 				return null;

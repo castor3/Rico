@@ -14,6 +14,8 @@
 12 - Export "RemoveDiacritics()" to SupportFiles.dll												<<<DONE>>>
 13 - Export some methods to the Parameter model														<<<DONE>>>
 14 - Fix calculate the average																		<<<DONE>>>
-15 - Create test to test multiple arguments, randomly picked
+15 - Create test to test multiple parameters, randomly picked										<<<DONE>>>
 16 - Create test to test average calculation
 17 - Use current directory if "InitialPathBoxContent" is empty										<<<DONE>>>
+18 - Ignore duplicate parameters																	<<<DONE>>>
+19 - Write secondary messages to .log file

@@ -71,7 +71,8 @@ namespace RicoTestes
 			const int numberOfParametersToTest = 50;
 			ParametersViewModel viewModel = new ParametersViewModel();
 			var lines = new string[50];
-			var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
+			//var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
+			var path = viewModel.BaseMachineParameters;
 
 			var linesFromFile = new Collection<string>();
 			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
@@ -83,21 +84,29 @@ namespace RicoTestes
 
 			if (!linesFromFile.Any()) Assert.Fail();
 
-			//var tempLinesFromFile = tempLinesFromFile.ToArray();
 			var random = new Random();
-			var randomValue = 0;
-			var auxString = string.Empty;
+			var newHashSet = new HashSet<int>();
 			for (int i = 0; i < numberOfParametersToTest; i++) {
-				randomValue = random.Next(linesFromFile.Count - 1);
-				lines[i] = Text.RemoveDiacritics(linesFromFile[randomValue - 1]);
+				if (!newHashSet.Add(random.Next(linesFromFile.Count - 1))) i--;
+			}
+			var hashArray = newHashSet.ToArray();
+
+			for (int i = 0; i < numberOfParametersToTest; i++) {
+				lines[i] = Text.RemoveDiacritics(linesFromFile[hashArray[i]]);
 			}
 
+			int uselessInt;
 			viewModel.ParametersCollection.Clear();
 			foreach (var line in lines) {
 				var parameter = new Parameter();
 				parameter.ParameterLine = line;
 				parameter.GetParameterCode();
+				if (!int.TryParse(parameter.Code, out uselessInt))
+					continue;
 				viewModel.ParametersCollection.Add(parameter);
+			}
+			foreach (var item in viewModel.ParametersCollection) {
+				item.Name = item.Code;
 			}
 			viewModel.CollectValues();
 		}
