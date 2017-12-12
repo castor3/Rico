@@ -12,6 +12,8 @@ using Rico.Models;
 using SupportFiles;
 using System.Text;
 using System.Windows.Threading;
+using System.Runtime.CompilerServices;
+using System.Diagnostics;
 
 namespace Rico.ViewModels
 {
@@ -32,7 +34,7 @@ namespace Rico.ViewModels
 
 		#region Fields
 		readonly string _CSVFilePath = "parameters_values.csv";
-
+		readonly string _logFilePath = "output_log.txt";
 		string _machineParametersFilePath = string.Empty;
 		IList<string> _listOfParametersCode = new List<string>();
 		IEnumerable<string> _listOfValidParameters;
@@ -194,7 +196,8 @@ namespace Rico.ViewModels
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
 					_machineParametersFilePath = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
-						UpdateStatusBar($"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect");
+						UpdateStatusBar($"Error collecting values");
+						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect");
 						return;
 					}
 				}
@@ -202,6 +205,7 @@ namespace Rico.ViewModels
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
+					Document.WriteToLogFile(_logFilePath, $"Error collecting values on parameter '{parameter.Name}' -- Method: {GetCurrentMethod()}");
 					return;
 				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
@@ -231,7 +235,6 @@ namespace Rico.ViewModels
 
 			var parameterValueAsDouble = 0.0d;
 			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
-				UpdateStatusBar($"Error collecting value of parameter: {parameter.Name}");
 				return false;
 			}
 			else {
@@ -330,6 +333,12 @@ namespace Rico.ViewModels
 		{
 			var valueToSave = parameterName + "," + parameterValue + "\n";
 			Document.AppendToFile(_CSVFilePath, valueToSave);
+		}
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		public string GetCurrentMethod()
+		{
+			var stackFrame = new StackTrace().GetFrame(1);
+			return stackFrame.GetMethod().Name;
 		}
 		#region StatusBar
 		// Status bar update
