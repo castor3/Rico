@@ -164,14 +164,14 @@ namespace Rico.ViewModels
 				UpdateStatusBar("There's a file missing");
 				return;
 			}
-			
+
 			if (_listOfParametersCode.Any())
 				_listOfParametersCode.Clear();
-			
-				foreach (var item in ParametersCollection) {
+
+			foreach (var item in ParametersCollection) {
 				_listOfParametersCode.Add(item.Code + " =");
 			}
-			
+
 			if (string.IsNullOrWhiteSpace(InitialPathBoxContent))
 				InitialPathBoxContent = Directory.GetCurrentDirectory();
 
@@ -179,7 +179,7 @@ namespace Rico.ViewModels
 				UpdateStatusBar("Failed to find parameters files");
 				return;
 			}
-			
+
 			var validationProperties = ValidateListedParameters();
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
@@ -194,7 +194,7 @@ namespace Rico.ViewModels
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
 					_machineParametersFilePath = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
-						UpdateStatusBar("Error collecting values");
+						UpdateStatusBar($"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect");
 						return;
 					}
 				}
@@ -310,17 +310,17 @@ namespace Rico.ViewModels
 			//		paramValidation.DuplicatedParameters + "Por favor verifique o parâmetro introduzido");
 			//}
 		}
-		private string GetParameterFromFile(string originalParameter)
+		private string GetParameterFromFile(string parameterFromList)
 		{// Retrieves, from the parameters file, the full line of the parameter passed
-			var array = originalParameter.Split(',');
-			var arrayIsNullOrEmpty = !array.Any();
+			var array = parameterFromList.Split(',');
+			var hasSplited = array.Count() > 1;
 			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
-				if (arrayIsNullOrEmpty) {
+				if (hasSplited) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return item;
 				}
 				else {
-					if (item.Contains(originalParameter))
+					if (item.Contains(parameterFromList))
 						return item;
 				}
 			}

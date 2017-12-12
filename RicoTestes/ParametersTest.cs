@@ -70,7 +70,6 @@ namespace RicoTestes
 		{// Randomly picks 50 parameters to test
 			const int numberOfParametersToTest = 50;
 			ParametersViewModel viewModel = new ParametersViewModel();
-			var lines = new string[50];
 			//var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
 			var path = viewModel.BaseMachineParameters;
 
@@ -85,23 +84,31 @@ namespace RicoTestes
 			if (!linesFromFile.Any()) Assert.Fail();
 
 			var random = new Random();
-			var newHashSet = new HashSet<int>();
+			var collectionOfRandomValues = new Collection<int>();
 			for (int i = 0; i < numberOfParametersToTest; i++) {
-				if (!newHashSet.Add(random.Next(linesFromFile.Count - 1))) i--;
+				var value = random.Next(linesFromFile.Count - 1);
+				if (!collectionOfRandomValues.Contains(value))
+					collectionOfRandomValues.Add(value);
+				else
+					i--;
 			}
-			var hashArray = newHashSet.ToArray();
 
+			var lines = new string[50];
 			for (int i = 0; i < numberOfParametersToTest; i++) {
-				lines[i] = Text.RemoveDiacritics(linesFromFile[hashArray[i]]);
+				lines[i] = Text.RemoveDiacritics(linesFromFile[collectionOfRandomValues[i]]);
 			}
 
+			var collectionOfValidCodes = new Collection<string>() { "MS", "MA", "MD", "ES", "PR", "SL" };
 			int uselessInt;
 			viewModel.ParametersCollection.Clear();
 			foreach (var line in lines) {
 				var parameter = new Parameter();
 				parameter.ParameterLine = line;
 				parameter.GetParameterCode();
-				if (!int.TryParse(parameter.Code, out uselessInt))
+				bool isSafeCode = false;
+				if (parameter.Code != null)
+					isSafeCode = collectionOfValidCodes.Any(str => parameter.Code.StartsWith(str));
+				if (!int.TryParse(parameter.Code, out uselessInt) && !isSafeCode)
 					continue;
 				viewModel.ParametersCollection.Add(parameter);
 			}

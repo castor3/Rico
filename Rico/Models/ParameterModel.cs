@@ -74,8 +74,12 @@ namespace Rico.Models
 		public bool GetParameterValue()
 		{// Uses the entire parameter line to extract the value (as string)
 			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
-			byte index = (byte)ParameterLine.IndexOf('=');
+			var index = (byte)ParameterLine.IndexOf('=');
 			ParameterLine = ParameterLine.Substring(index + 1).Trim();
+
+			// This means that the ParameterLine does not contain any value after the '='
+			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
+			
 			try {
 				Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
 											.Where(c => c != "." && c.Trim() != "")
@@ -103,7 +107,7 @@ namespace Rico.Models
 			Match regexResult;
 			try {
 				// escapes -> -  .  ,  /  \  "  )  ( 
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(]+\s{0,2})+)\s+(\w+)");
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
 				return null;
