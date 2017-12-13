@@ -51,7 +51,7 @@ namespace Rico.ViewModels
 		{
 			get { return _initialPathBoxContent; }
 			set {
-				if (_initialPathBoxContent == value) return;
+				if (_initialPathBoxContent == value || value == null) return;
 				_initialPathBoxContent = value;
 				RaisePropertyChanged(nameof(InitialPathBoxContent));
 			}
@@ -61,7 +61,7 @@ namespace Rico.ViewModels
 		{
 			get { return _parameterBoxContent; }
 			set {
-				if (_parameterBoxContent == value) return;
+				if (_parameterBoxContent == value || value == null) return;
 				_parameterBoxContent = value;
 				RaisePropertyChanged(nameof(ParameterBoxContent));
 			}
@@ -73,7 +73,7 @@ namespace Rico.ViewModels
 				return _parametersCollection;
 			}
 			set {
-				if (_parametersCollection == value) return;
+				if (_parametersCollection == value || value == null) return;
 				_parametersCollection = value;
 				RaisePropertyChanged(nameof(ParametersCollection));
 			}
@@ -85,7 +85,7 @@ namespace Rico.ViewModels
 				return _parametersCollectionSelectedItem;
 			}
 			set {
-				if (_parametersCollectionSelectedItem == value) return;
+				if (_parametersCollectionSelectedItem == value || value == null) return;
 				_parametersCollectionSelectedItem = value;
 				RaisePropertyChanged(nameof(ParametersCollectionSelectedItem));
 			}
@@ -97,7 +97,7 @@ namespace Rico.ViewModels
 				return _statusBarContent;
 			}
 			set {
-				if (_statusBarContent == value) return;
+				if (_statusBarContent == value || value == null) return;
 				_statusBarContent = value;
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
@@ -107,7 +107,14 @@ namespace Rico.ViewModels
 		readonly string _parametersFilesPaths = "machinepaths.txt";
 		public string ParametersFilesPaths => _parametersFilesPaths;
 		private string _nameOfFileToSearch;
-		public string NameOfFileToSearch => _nameOfFileToSearch;
+		public string NameOfFileToSearch
+		{
+			get { return _nameOfFileToSearch; }
+			set {
+				if (value != _nameOfFileToSearch && value != null)
+					_nameOfFileToSearch = value;
+			}
+		}
 		#endregion
 
 		#region Property changed Event
