@@ -27,9 +27,10 @@ namespace Rico.ViewModels
 				new Parameter { Code = "1496" },	// Maximum Y1Y2 difference
 				new Parameter { Code = "4960" },	// Pressão (subindo)
 			};
+			NameOfFileToSearch = "Untitled folder";
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
 			RemoveParameterCommand = new RelayCommand(CanRemoveParameter, RemoveParameter);
-			CollectValuesCommand = new RelayCommand(CanCollectValues, CollectValues);
+			CollectValuesCommand = new RelayCommand(CanCollectValues, ExecuteCollectValues);
 		}
 
 		#region Fields
@@ -147,6 +148,7 @@ namespace Rico.ViewModels
 			ParametersCollection.Add(new Parameter { Name = ParameterBoxContent });
 			ParameterBoxContent = string.Empty;
 			UpdateStatusBar("Added successfully");
+			return;
 		}
 		private bool CanRemoveParameter()
 		{
@@ -167,12 +169,21 @@ namespace Rico.ViewModels
 		{
 			return ParametersCollection.Count > 0 ? true : false;
 		}
-		public void CollectValues()
+		public void ExecuteCollectValues()
+		{// Method used by the "CollectValuesCommand"
+			CollectValues();
+		}
+		public bool CollectValues()
 		{
+			if (string.IsNullOrWhiteSpace(NameOfFileToSearch)) {
+				UpdateStatusBar("Need to specify the machine name/model");
+				return false;
+			}
+
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
 				Document.WriteToLogFile(_logFilePath, $"'{BaseMachineParameters}' file is missing. Method: '{GetCurrentMethod()}'");
-				return;
+				return false;
 			}
 
 			if (_listOfParametersCode.Any())
@@ -188,7 +199,7 @@ namespace Rico.ViewModels
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
 				Document.WriteToLogFile(_logFilePath, $"Didn't find any 'machineparameters.txt'. Method: '{nameof(GetPathsOfParametersFiles)}'");
-				return;
+				return false;
 			}
 
 			var validationProperties = new ParameterValidation();
@@ -196,7 +207,7 @@ namespace Rico.ViewModels
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
 				Document.WriteToLogFile(_logFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(validationProperties.ValidateListedParameters)}'");
-				return;
+				return false;
 			}
 
 			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
@@ -209,7 +220,7 @@ namespace Rico.ViewModels
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar($"Error collecting values");
 						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
-						return;
+						return false;
 					}
 				}
 				parameter.Average /= parameter.NumberOfOcurrences;
@@ -217,13 +228,14 @@ namespace Rico.ViewModels
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
 					Document.WriteToLogFile(_logFilePath, $"Error collecting values on parameter '{parameter.Name}', name returned empty. Method: {GetCurrentMethod()}");
-					return;
+					return false;
 				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
 			Document.AppendToFile(_CSVFilePath, "\n");
 			UpdateStatusBar("Collected successfully");
 			Document.WriteToLogFile(_logFilePath, $"Collected values successfully");
+			return true;
 		}
 		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file

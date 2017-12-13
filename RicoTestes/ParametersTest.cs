@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.Models;
 using Rico.ViewModels;
 using SupportFiles;
-using System.Linq;
-using System.IO;
 
 namespace RicoTestes
 {
@@ -16,7 +14,7 @@ namespace RicoTestes
 		[TestMethod]
 		public void AddParameterTest()
 		{
-			ParametersViewModel viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel();
 			var initialCount = viewModel.ParametersCollection.Count;
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
@@ -26,7 +24,7 @@ namespace RicoTestes
 		[TestMethod]
 		public void RemoveParameterTest()
 		{
-			ParametersViewModel viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel();
 			var initialCount = viewModel.ParametersCollection.Count;
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
@@ -41,7 +39,7 @@ namespace RicoTestes
 		[TestMethod]
 		public void PreventDuplicateParameterTest()
 		{
-			ParametersViewModel viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel();
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 			var initialCount = viewModel.ParametersCollection.Count;
@@ -54,22 +52,17 @@ namespace RicoTestes
 		[TestMethod]
 		public void CheckInputBoxIsClearAfterParameterAdded()
 		{
-			ParametersViewModel viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel();
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 			Assert.IsTrue(string.IsNullOrEmpty(viewModel.ParameterBoxContent));
 		}
-		//[TestMethod]
-		//public void TestAverageCalculation()
-		//{// Randomly picks multiple parameters to test
-		//	ParametersViewModel viewModel = new ParametersViewModel();
 
-		//}
 		[TestMethod]
 		public void TestMultipleParameters()
 		{// Randomly picks 50 parameters to test
 			const int numberOfParametersToTest = 50;
-			ParametersViewModel viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel();
 			//var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
 			var path = viewModel.BaseMachineParameters;
 
@@ -83,21 +76,19 @@ namespace RicoTestes
 
 			if (!linesFromFile.Any()) Assert.Fail();
 
-			var random = new Random();
-			var collectionOfRandomValues = new Collection<int>();
-			for (int i = 0; i < numberOfParametersToTest; i++) {
-				var value = random.Next(linesFromFile.Count - 1);
-				if (!collectionOfRandomValues.Contains(value))
-					collectionOfRandomValues.Add(value);
-				else
-					i--;
-			}
+			var collectionOfRandomValues = GenerateRandomValues(numberOfParametersToTest, linesFromFile);
 
 			var lines = new string[50];
 			for (int i = 0; i < numberOfParametersToTest; i++) {
 				lines[i] = Text.RemoveDiacritics(linesFromFile[collectionOfRandomValues[i]]);
 			}
 
+			GetParameterCodeFromEachOfTheChosenLines(viewModel, lines);
+
+			viewModel.CollectValues();
+		}
+		private static void GetParameterCodeFromEachOfTheChosenLines(ParametersViewModel viewModel, string[] lines)
+		{
 			var collectionOfValidCodes = new Collection<string>() { "MS", "MA", "MD", "ES", "PR", "SL" };
 			int uselessInt;
 			viewModel.ParametersCollection.Clear();
@@ -112,10 +103,21 @@ namespace RicoTestes
 					continue;
 				viewModel.ParametersCollection.Add(parameter);
 			}
-			foreach (var item in viewModel.ParametersCollection) {
-				item.Name = item.Code;
+		}
+
+		private static Collection<int> GenerateRandomValues(int numberOfParametersToTest, Collection<string> linesFromFile)
+		{
+			var random = new Random();
+			var collectionOfRandomValues = new Collection<int>();
+			for (int i = 0; i < numberOfParametersToTest; i++) {
+				var value = random.Next(linesFromFile.Count - 1);
+				if (!collectionOfRandomValues.Contains(value))
+					collectionOfRandomValues.Add(value);
+				else
+					i--;
 			}
-			viewModel.CollectValues();
+
+			return collectionOfRandomValues;
 		}
 	}
 }

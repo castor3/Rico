@@ -15,8 +15,7 @@
 13 - Export some methods to the Parameter model														<<<DONE>>>
 14 - Fix calculate the average																		<<<DONE>>>
 15 - Create test to test multiple parameters, randomly picked										<<<DONE>>>
-16 - Create test to test average calculation
-17 - Use current directory if "InitialPathBoxContent" is empty										<<<DONE>>>
-18 - Ignore duplicate parameters																	<<<DONE>>>
-19 - Write secondary messages to .log file															<<<DONE>>>
-20 - Search for parameters files only on folders which name match the value of the textbox			
+16 - Use current directory if "InitialPathBoxContent" is empty										<<<DONE>>>
+17 - Ignore duplicate parameters																	<<<DONE>>>
+18 - Write secondary messages to .log file															<<<DONE>>>
+19 - Search for parameters files only on folders which name match the value of the textbox			
