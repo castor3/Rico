@@ -67,6 +67,7 @@ namespace RicoTestes
 			var path = viewModel.BaseMachineParameters;
 
 			var linesFromFile = new Collection<string>();
+
 			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
 				if (string.IsNullOrWhiteSpace(item) || !item.Contains('='))
 					continue;
@@ -79,9 +80,8 @@ namespace RicoTestes
 			var collectionOfRandomValues = GenerateRandomValues(numberOfParametersToTest, linesFromFile);
 
 			var lines = new string[50];
-			for (int i = 0; i < numberOfParametersToTest; i++) {
+			for (int i = 0; i < numberOfParametersToTest; i++)
 				lines[i] = Text.RemoveDiacritics(linesFromFile[collectionOfRandomValues[i]]);
-			}
 
 			GetParameterCodeFromEachOfTheChosenLines(viewModel, lines);
 
@@ -104,7 +104,6 @@ namespace RicoTestes
 				viewModel.ParametersCollection.Add(parameter);
 			}
 		}
-
 		private static Collection<int> GenerateRandomValues(int numberOfParametersToTest, Collection<string> linesFromFile)
 		{
 			var random = new Random();

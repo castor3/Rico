@@ -36,7 +36,7 @@ namespace Rico.ViewModels
 		#region Fields
 		readonly string _CSVFilePath = "parameters_values.csv";
 		readonly string _logFilePath = "output_log.txt";
-		string _machineParametersFilePath = string.Empty;
+		string _currentMachineParametersFile = string.Empty;
 		IList<string> _listOfParametersCode = new List<string>();
 		IEnumerable<string> _listOfValidParameters;
 		bool _isFirstCycle = true;
@@ -198,7 +198,7 @@ namespace Rico.ViewModels
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
-				Document.WriteToLogFile(_logFilePath, $"Didn't find any 'machineparameters.txt'. Method: '{nameof(GetPathsOfParametersFiles)}'");
+				Document.WriteToLogFile(_logFilePath, $"Didn't find any 'machineparameters.txt' file. Method: '{nameof(GetPathsOfParametersFiles)}'");
 				return false;
 			}
 
@@ -216,7 +216,7 @@ namespace Rico.ViewModels
 				var parameter = new Parameter();
 				_isFirstCycle = true;
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
-					_machineParametersFilePath = file;
+					_currentMachineParametersFile = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar($"Error collecting values");
 						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
@@ -273,9 +273,19 @@ namespace Rico.ViewModels
 		private bool GetPathsOfParametersFiles()
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
-			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories);
+			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories).ToList();
 			if (!paths.Any()) return false;
-			Document.WriteToFile(ParametersFilesPaths, paths);
+			for (int i = paths.Count - 1; i >= 0; i--) {
+				// Check if the file is in a folder that the user wants to see (ex: contains the name/model of the machine)
+				if (!paths[i].ToLower().Contains(NameOfFileToSearch.ToLower())) {
+					paths.RemoveAt(i);
+					continue;
+				}
+				// Check if the file is not of an incompatible version
+				if (Document.YieldReturnLinesFromFile(paths[i]).Skip(2).First().Contains("V2.2.10"))
+					paths.RemoveAt(i);
+			}
+			Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
 			return true;
 		}
 		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
@@ -293,7 +303,7 @@ namespace Rico.ViewModels
 		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = parameterFromList.Split(',');
 			var hasSplited = array.Count() > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(_machineParametersFilePath)) {
+			foreach (var item in Document.YieldReturnLinesFromFile(_currentMachineParametersFile)) {
 				if (hasSplited) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return item;
