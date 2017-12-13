@@ -184,10 +184,11 @@ namespace Rico.ViewModels
 				return;
 			}
 
-			var validationProperties = ValidateListedParameters();
+			var validationProperties = new ParameterValidation();
+			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
-				Document.WriteToLogFile(_logFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(ValidateListedParameters)}'");
+				Document.WriteToLogFile(_logFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(validationProperties.ValidateListedParameters)}'");
 				return;
 			}
 
@@ -257,58 +258,6 @@ namespace Rico.ViewModels
 			if (!paths.Any()) return false;
 			Document.WriteToFile(ParametersFilesPaths, paths);
 			return true;
-		}
-		private ParameterValidation ValidateListedParameters()
-		{// What: Check if the parameter exists in the file and if it does not have duplicates
-		 // Why: To know if it's OK to proceed with retrieving the parameter name and value from the file
-			var paramValidation = new ParameterValidation();
-			foreach (var parameterCode in _listOfParametersCode) {
-				if (!CheckIfParameterExistsInFile(parameterCode)) {
-					paramValidation.NumberOfParametersNotFound++;
-					paramValidation.ParametersNotFound += (parameterCode + "\n");
-				}
-				if (SearchForDuplicatedParameterInFile(parameterCode)) {
-					paramValidation.NumberOfDuplicates++;
-					paramValidation.DuplicatedParameters.Add(parameterCode);
-				}
-			}
-			return paramValidation;
-		}
-		private bool CheckIfParameterExistsInFile(string parameter)
-		{// What: Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
-		 // Why: Simply to know if the parameter exists in the file
-			var array = parameter.Split(',');
-			var arrayIsNotNullOrEmpty = array.Any();
-			foreach (var item in Document.YieldReturnLinesFromFile(BaseMachineParameters)) {
-				if (arrayIsNotNullOrEmpty) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
-						return true;
-				}
-				else {
-					if (item.Contains(parameter))
-						return true;
-				}
-			}
-			return false;
-		}
-		private bool SearchForDuplicatedParameterInFile(string parameter)
-		{// Returns TRUE if finds duplicates of the parameter passed
-		 // Why: We can only get the value of each parameter, once from each file. If it finds the same parameter
-		 //		more than once, there's something wrong, and so the user will have to rechecked what he typed
-			var found = 0;
-			var array = parameter.Split(',');
-			var arrayNotNullOrEmpty = (array.Count() < 1);
-			foreach (var item in Document.YieldReturnLinesFromFile(BaseMachineParameters)) {
-				if (arrayNotNullOrEmpty) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
-						if (++found > 1) return true;
-				}
-				else {
-					if (item.Contains(parameter))
-						if (++found > 1) return true;
-				}
-			}
-			return false;
 		}
 		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
 		{// !!! Messages will override each other if they happen to be written to the screen at the same time
