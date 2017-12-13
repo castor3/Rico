@@ -35,6 +35,7 @@
 			<Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}"
 					Content="Collect parameters" Height="30" />
 		</StackPanel>
+
 		<StatusBar VerticalAlignment="Bottom" Background="{x:Null}">
 			<StatusBarItem>
 				<TextBlock Text="{Binding Path=StatusBarContent}"/>

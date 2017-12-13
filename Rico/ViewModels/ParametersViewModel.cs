@@ -22,10 +22,10 @@ namespace Rico.ViewModels
 		public ParametersViewModel()
 		{
 			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { Code = "3895" },			// P-ganho
-				new Parameter { Code = "3915" },			// Ganho de paralelismo
-				new Parameter { Code = "1496" },			// Maximum Y1Y2 difference
-				new Parameter { Code = "4960" },			// Pressão (subindo)
+				new Parameter { Code = "3895" },	// P-ganho
+				new Parameter { Code = "3915" },	// Ganho de paralelismo
+				new Parameter { Code = "1496" },	// Maximum Y1Y2 difference
+				new Parameter { Code = "4960" },	// Pressão (subindo)
 			};
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
 			RemoveParameterCommand = new RelayCommand(CanRemoveParameter, RemoveParameter);
@@ -164,6 +164,7 @@ namespace Rico.ViewModels
 		{
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
+				Document.WriteToLogFile(_logFilePath, $"'{BaseMachineParameters}' file is missing. Method: '{GetCurrentMethod()}'");
 				return;
 			}
 
@@ -179,12 +180,14 @@ namespace Rico.ViewModels
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
+				Document.WriteToLogFile(_logFilePath, $"Didn't find any 'machineparameters.txt'. Method: '{nameof(GetPathsOfParametersFiles)}'");
 				return;
 			}
 
 			var validationProperties = ValidateListedParameters();
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
+				Document.WriteToLogFile(_logFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(ValidateListedParameters)}'");
 				return;
 			}
 
@@ -197,7 +200,7 @@ namespace Rico.ViewModels
 					_machineParametersFilePath = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar($"Error collecting values");
-						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect");
+						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
 						return;
 					}
 				}
@@ -205,19 +208,20 @@ namespace Rico.ViewModels
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
-					Document.WriteToLogFile(_logFilePath, $"Error collecting values on parameter '{parameter.Name}' -- Method: {GetCurrentMethod()}");
+					Document.WriteToLogFile(_logFilePath, $"Error collecting values on parameter '{parameter.Name}', name returned empty. Method: {GetCurrentMethod()}");
 					return;
 				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
 			Document.AppendToFile(_CSVFilePath, "\n");
 			UpdateStatusBar("Collected successfully");
+			Document.WriteToLogFile(_logFilePath, $"Collected values successfully");
 		}
 		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
 			parameter.ParameterLine = GetParameterFromFile(parameterFromList);
 
-			// If the "ParameterLine" is empty is probably because it searched in an incompatible file
+			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
 			// Anyway, it will proceed ('return true;') to the next file without throwing an error
 			if (string.IsNullOrWhiteSpace(parameter.ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
 
@@ -231,7 +235,11 @@ namespace Rico.ViewModels
 			parameter.GetParameterValue();
 			var parameterValue = parameter.Value;
 
-			if (string.IsNullOrWhiteSpace(parameterValue)) return false;
+			if (string.IsNullOrWhiteSpace(parameterValue)) {
+				if (parameter.Ignore)
+					return true;
+				return false;
+			}
 
 			var parameterValueAsDouble = 0.0d;
 			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {

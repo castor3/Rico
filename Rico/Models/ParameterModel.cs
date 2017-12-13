@@ -16,7 +16,7 @@ namespace Rico.Models
 		{
 			get { return _name; }
 			set {
-				if (_name != value)
+				if (_name != value && value != null)
 					_name = value;
 			}
 		}
@@ -25,7 +25,7 @@ namespace Rico.Models
 		{
 			get { return _value; }
 			set {
-				if (_value != value)
+				if (_value != value && value != null)
 					_value = value;
 			}
 		}
@@ -34,11 +34,19 @@ namespace Rico.Models
 		{
 			get { return _parameterLine; }
 			set {
-				if (_parameterLine != value)
+				if (_parameterLine != value && value != null)
 					_parameterLine = value;
 			}
 		}
-		public double Average { get; set; }
+		private double _average;
+		public double Average
+		{
+			get { return _average; }
+			set {
+				if (_average != value)
+					_average = value;
+			}
+		}
 		public int NumberOfOcurrences { get; set; }
 		private string _code;
 		public string Code
@@ -47,15 +55,15 @@ namespace Rico.Models
 				return _code;
 			}
 			set {
-				if (_code != value)
+				if (_code != value && value != null)
 					_code = value;
 			}
 		}
-		private bool ignore;
+		private bool _ignore;
 		public bool Ignore
 		{
-			get { return ignore; }
-			set { ignore = value; }
+			get { return _ignore; }
+			set { _ignore = value; }
 		}
 
 		// Methods
@@ -78,8 +86,11 @@ namespace Rico.Models
 			ParameterLine = ParameterLine.Substring(index + 1).Trim();
 
 			// This means that the ParameterLine does not contain any value after the '='
-			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
-			
+			if (string.IsNullOrWhiteSpace(ParameterLine)) {
+				Ignore = true;
+				return false;
+			}
+
 			try {
 				Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
 											.Where(c => c != "." && c.Trim() != "")

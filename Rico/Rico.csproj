@@ -50,7 +50,7 @@
     </Reference>
     <Reference Include="SupportFiles, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\SupportFiles\SupportFiles\bin\Debug\SupportFiles.dll</HintPath>
+      <HintPath>..\..\SupportFiles\SupportFiles\bin\Release\SupportFiles.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
