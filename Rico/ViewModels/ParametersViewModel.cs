@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -208,6 +209,7 @@ namespace Rico.ViewModels
 
 			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
 
+			var parameterDataToSaveToCSV = new StringBuilder().Append($"--> Values for: '{NameOfFileToSearch}'\n");
 			foreach (var parameterFromList in _listOfValidParameters) {
 				var parameter = new Parameter();
 				_isFirstCycle = true;
@@ -221,14 +223,24 @@ namespace Rico.ViewModels
 				}
 				parameter.Average /= parameter.NumberOfOcurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
+
+				if (parameter.Name.Contains(',')) {
+					var newName = new StringBuilder();
+					foreach (var item in parameter.Name) {
+						if (!item.Equals(','))
+							newName.Append(item);
+					}
+					parameter.Name = newName.ToString();
+				}
+
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
 					Document.WriteToLogFile(LogFilePath, $"In method: '{GetCurrentMethod()}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
-				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
+				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
 			}
-			Document.AppendToFile(CSVFilePath, "\n");
+			Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n");
 			UpdateStatusBar("Collected successfully");
 			Document.WriteToLogFile(LogFilePath, $"Collected values successfully");
 			return true;
@@ -318,11 +330,6 @@ namespace Rico.ViewModels
 				}
 			}
 			return string.Empty;
-		}
-		private void SaveParameterToCSV(string parameterName, string parameterValue)
-		{
-			var valueToSave = parameterName + "," + parameterValue + "\n";
-			Document.AppendToFile(CSVFilePath, valueToSave);
 		}
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		public string GetCurrentMethod() => new StackTrace().GetFrame(1).GetMethod().Name;

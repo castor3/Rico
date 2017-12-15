@@ -2,7 +2,7 @@
 
 1 - Forçar a inserção do código do parâmetro em vez da descrição (multi-language friendly)			<<<DONE>>>
 2 - Só executar as ações depois de verificar que não existe duplicados em nenhum dos parâmetros		<<<DONE>>>
-3 - Implement option to remove parameter from list																		<<<DONE>>>
+3 - Implement option to remove parameter from list													<<<DONE>>>
 4 - Implement Caliburn.Micro																		<<<DONE>>>
 5 - Implement SupportFiles.dll																		<<<DONE>>>
 6 - Manter a verificação da existência de "," no nome do parâmetro									<<<DONE>>>
@@ -22,3 +22,10 @@
 20 - Add logic to see if .csv file has more lines after running the test "TestMultipleParameters()"	<<<DONE>>>
 21 - Find version of "machinesparameters.txt" file and ignore if it's an incompatible version		<<<DONE>>>
 22 - Add handler for global uncaught exceptions														<<<DONE>>>
+23 - Fix "GetParameterName()" for some parameters (ex: Deceleration	max. speed to 0  (3907))		<<<DONE>>>
+24 - Add name/model of the machine (from the textbox) to the beginning of each set of values collected	<<<DONE>>>
+25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
+
+
+
+Issue --->>>  Environment.NewLine stopped working in "Document -> SupportFiles.dll"  -.-
