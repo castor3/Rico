@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.Models;
@@ -117,6 +118,16 @@ namespace RicoTestes
 			}
 
 			return collectionOfRandomValues;
+		}
+
+		[TestMethod]
+		public void RecheckSizeOfCSVFileAfterCollectingValues()
+		{// If file size is bigger, then it means something was written to it
+			var viewModel = new ParametersViewModel();
+			var initialSize = new FileInfo(viewModel.CSVFilePath).Length;
+			TestMultipleParameters();
+			var finalSize = new FileInfo(viewModel.CSVFilePath).Length;
+			Assert.AreNotEqual(initialSize, finalSize);
 		}
 	}
 }

@@ -73,8 +73,6 @@ namespace Rico.Models
 				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
 
 			Name = parameterName;
-			throw new Exception();
-
 			return true;
 		}
 		public bool GetParameterValue()

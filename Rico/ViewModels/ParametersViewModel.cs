@@ -31,7 +31,6 @@ namespace Rico.ViewModels
 		}
 
 		#region Fields
-		readonly string _CSVFilePath = "parameters_values.csv";
 		string _currentMachineParametersFile = string.Empty;
 		IList<string> _listOfParametersCode = new List<string>();
 		IEnumerable<string> _listOfValidParameters;
@@ -101,6 +100,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
+		public string CSVFilePath => "parameters_values.csv";
 		public string BaseMachineParameters => "Parameters.txt";
 		public string ParametersFilesPaths => "machinepaths.txt";
 		public static string LogFilePath => "output_log.txt";
@@ -178,7 +178,7 @@ namespace Rico.ViewModels
 
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
-				Document.WriteToLogFile(LogFilePath, $"'{BaseMachineParameters}' file is missing. Method: '{GetCurrentMethod()}'");
+				Document.WriteToLogFile(LogFilePath, $"In method: '{GetCurrentMethod()}()' -> '{BaseMachineParameters}' file is missing.");
 				return false;
 			}
 
@@ -194,7 +194,7 @@ namespace Rico.ViewModels
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
-				Document.WriteToLogFile(LogFilePath, $"Didn't find any 'machineparameters.txt' file. Method: '{nameof(GetPathsOfParametersFiles)}'");
+				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(GetPathsOfParametersFiles)}()' -> Didn't find any 'machineparameters.txt' file.");
 				return false;
 			}
 
@@ -202,7 +202,7 @@ namespace Rico.ViewModels
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
-				Document.WriteToLogFile(LogFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(validationProperties.ValidateListedParameters)}'");
+				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(validationProperties.ValidateListedParameters)}()' -> Failed to validate all the parameters from the list box.");
 				return false;
 			}
 
@@ -215,7 +215,7 @@ namespace Rico.ViewModels
 					_currentMachineParametersFile = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar($"Error collecting values");
-						Document.WriteToLogFile(LogFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
+						Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValidParameter)}()' -> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect.");
 						return false;
 					}
 				}
@@ -223,12 +223,12 @@ namespace Rico.ViewModels
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
-					Document.WriteToLogFile(LogFilePath, $"Error collecting values on parameter '{parameter.Name}', name returned empty. Method: {GetCurrentMethod()}");
+					Document.WriteToLogFile(LogFilePath, $"In method: '{GetCurrentMethod()}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
-			Document.AppendToFile(_CSVFilePath, "\n");
+			Document.AppendToFile(CSVFilePath, "\n");
 			UpdateStatusBar("Collected successfully");
 			Document.WriteToLogFile(LogFilePath, $"Collected values successfully");
 			return true;
@@ -322,14 +322,10 @@ namespace Rico.ViewModels
 		private void SaveParameterToCSV(string parameterName, string parameterValue)
 		{
 			var valueToSave = parameterName + "," + parameterValue + "\n";
-			Document.AppendToFile(_CSVFilePath, valueToSave);
+			Document.AppendToFile(CSVFilePath, valueToSave);
 		}
 		[MethodImpl(MethodImplOptions.NoInlining)]
-		public string GetCurrentMethod()
-		{
-			var stackFrame = new StackTrace().GetFrame(1);
-			return stackFrame.GetMethod().Name;
-		}
+		public string GetCurrentMethod() => new StackTrace().GetFrame(1).GetMethod().Name;
 		#region StatusBar
 		// Status bar update
 		private void SetStatusBarTimer()

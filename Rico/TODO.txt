@@ -2,7 +2,7 @@
 
 1 - Forçar a inserção do código do parâmetro em vez da descrição (multi-language friendly)			<<<DONE>>>
 2 - Só executar as ações depois de verificar que não existe duplicados em nenhum dos parâmetros		<<<DONE>>>
-3 - Remove parameter from list																		<<<DONE>>>
+3 - Implement option to remove parameter from list																		<<<DONE>>>
 4 - Implement Caliburn.Micro																		<<<DONE>>>
 5 - Implement SupportFiles.dll																		<<<DONE>>>
 6 - Manter a verificação da existência de "," no nome do parâmetro									<<<DONE>>>
@@ -19,6 +19,6 @@
 17 - Ignore duplicate parameters																	<<<DONE>>>
 18 - Write secondary messages to .log file															<<<DONE>>>
 19 - Search for parameters files only on folders which name match the value of the textbox			<<<DONE>>>
-20 - Add logic to see if .csv file has more lines after running the test "TestMultipleParameters()"
+20 - Add logic to see if .csv file has more lines after running the test "TestMultipleParameters()"	<<<DONE>>>
 21 - Find version of "machinesparameters.txt" file and ignore if it's an incompatible version		<<<DONE>>>
 22 - Add handler for global uncaught exceptions														<<<DONE>>>
