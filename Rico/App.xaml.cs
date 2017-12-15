@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Windows;
+using Rico.ViewModels;
+using SupportFiles;
+using System.Linq;
 
 namespace Rico
 {
@@ -13,5 +12,15 @@ namespace Rico
 	/// </summary>
 	public partial class App : Application
 	{
+		static App()
+		{
+			AppDomain.CurrentDomain.UnhandledException += HandleGeneralException;
+		}
+
+		static void HandleGeneralException(object sender, UnhandledExceptionEventArgs e)
+		{
+			Document.WriteToLogFile(ParametersViewModel.LogFilePath, ((Exception)e.ExceptionObject).Message.TrimEnd('.') + $" in method '{GetCurrentMethod()}()'");
+		}
+		static string GetCurrentMethod() => new StackTrace().GetFrame(2).GetMethod().Name;
 	}
 }

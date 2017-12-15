@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using System.Windows;
 using System.Text.RegularExpressions;
 
 namespace Rico.Models
@@ -12,6 +7,12 @@ namespace Rico.Models
 	public class Parameter
 	{
 		private string _name;
+		private string _value;
+		private string _parameterLine;
+		private double _average;
+		private string _code;
+		private bool _ignore;
+
 		public string Name
 		{
 			get { return _name; }
@@ -20,7 +21,6 @@ namespace Rico.Models
 					_name = value;
 			}
 		}
-		private string _value;
 		public string Value
 		{
 			get { return _value; }
@@ -29,7 +29,6 @@ namespace Rico.Models
 					_value = value;
 			}
 		}
-		private string _parameterLine;
 		public string ParameterLine
 		{
 			get { return _parameterLine; }
@@ -38,7 +37,6 @@ namespace Rico.Models
 					_parameterLine = value;
 			}
 		}
-		private double _average;
 		public double Average
 		{
 			get { return _average; }
@@ -48,7 +46,6 @@ namespace Rico.Models
 			}
 		}
 		public int NumberOfOcurrences { get; set; }
-		private string _code;
 		public string Code
 		{
 			get {
@@ -59,7 +56,6 @@ namespace Rico.Models
 					_code = value;
 			}
 		}
-		private bool _ignore;
 		public bool Ignore
 		{
 			get { return _ignore; }
@@ -77,6 +73,8 @@ namespace Rico.Models
 				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
 
 			Name = parameterName;
+			throw new Exception();
+
 			return true;
 		}
 		public bool GetParameterValue()

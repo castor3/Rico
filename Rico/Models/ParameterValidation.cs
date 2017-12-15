@@ -1,17 +1,57 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Rico.Models;
 using SupportFiles;
 
 namespace Rico
 {
 	public class ParameterValidation
 	{
-		public string ParametersNotFound { get; set; }
-		public ICollection<string> DuplicatedParameters { get; set; } = new Collection<string>();
-		public int NumberOfParametersNotFound { get; set; }
-		public int NumberOfDuplicates { get; set; }
+		//public ParameterValidation()
+		//{
+		//	AppDomain currentDomain = AppDomain.CurrentDomain;
+		//	currentDomain.UnhandledException += new UnhandledExceptionEventHandler(ExceptionHandler.HandleGeneralException);
+		//}
 
+		private string _parametersNotFound;
+		private ICollection<string> _duplicatedParameters = new Collection<string>();
+		private int _numberOfParametersNotFound;
+		private int _numberOfDuplicates;
+
+		public string ParametersNotFound
+		{
+			get { return _parametersNotFound; }
+			set {
+				if (value != _parametersNotFound && value != null)
+					_parametersNotFound = value;
+			}
+		}
+		public ICollection<string> DuplicatedParameters
+		{
+			get { return _duplicatedParameters; }
+			set {
+				if (value != _duplicatedParameters && value != null)
+					_duplicatedParameters = value;
+			}
+		}
+		public int NumberOfParametersNotFound
+		{
+			get { return _numberOfParametersNotFound; }
+			set {
+				if (value != _numberOfParametersNotFound)
+					_numberOfParametersNotFound = value;
+			}
+		}
+		public int NumberOfDuplicates
+		{
+			get { return _numberOfDuplicates; }
+			set {
+				if (value != _numberOfDuplicates)
+					_numberOfDuplicates = value;
+			}
+		}
 
 		public void ValidateListedParameters(IList<string> listOfParametersCode, string path)
 		{// What: Check if the parameter exists in the file and if it does not have duplicates
@@ -63,12 +103,5 @@ namespace Rico
 			}
 			return false;
 		}
-
-		//public bool CheckMinimumAmountOfCharacters(string parameter, int minLength = 2)
-		//{// Return true for enough chars
-		//	var array = parameter.Split(',');
-		//	if (array[0].Length > minLength) return true;
-		//	return false;
-		//}
 	}
 }

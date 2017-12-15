@@ -1,19 +1,16 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
-using System.IO;
-using System.Globalization;
-using System.Collections.Generic;
+using System.Windows.Threading;
 using Rico.Models;
 using SupportFiles;
-using System.Text;
-using System.Windows.Threading;
-using System.Runtime.CompilerServices;
-using System.Diagnostics;
 
 namespace Rico.ViewModels
 {
@@ -35,7 +32,6 @@ namespace Rico.ViewModels
 
 		#region Fields
 		readonly string _CSVFilePath = "parameters_values.csv";
-		readonly string _logFilePath = "output_log.txt";
 		string _currentMachineParametersFile = string.Empty;
 		IList<string> _listOfParametersCode = new List<string>();
 		IEnumerable<string> _listOfValidParameters;
@@ -48,6 +44,12 @@ namespace Rico.ViewModels
 		public ICommand CollectValuesCommand { get; }
 
 		private string _initialPathBoxContent = Directory.GetCurrentDirectory();
+		private string _parameterBoxContent;
+		private ObservableCollection<Parameter> _parametersCollection;
+		private Parameter _parametersCollectionSelectedItem;
+		private string _statusBarContent = "Pronto";
+		private string _nameOfFileToSearch;
+
 		public string InitialPathBoxContent
 		{
 			get { return _initialPathBoxContent; }
@@ -57,7 +59,6 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(InitialPathBoxContent));
 			}
 		}
-		private string _parameterBoxContent;
 		public string ParameterBoxContent
 		{
 			get { return _parameterBoxContent; }
@@ -67,7 +68,6 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParameterBoxContent));
 			}
 		}
-		private ObservableCollection<Parameter> _parametersCollection;
 		public ObservableCollection<Parameter> ParametersCollection
 		{
 			get {
@@ -79,7 +79,6 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollection));
 			}
 		}
-		private Parameter _parametersCollectionSelectedItem;
 		public Parameter ParametersCollectionSelectedItem
 		{
 			get {
@@ -91,7 +90,6 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollectionSelectedItem));
 			}
 		}
-		private string _statusBarContent = "Pronto";
 		public string StatusBarContent
 		{
 			get {
@@ -103,11 +101,9 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
-		readonly string _baseMachineParameters = "Parameters.txt";
-		public string BaseMachineParameters => _baseMachineParameters;
-		readonly string _parametersFilesPaths = "machinepaths.txt";
-		public string ParametersFilesPaths => _parametersFilesPaths;
-		private string _nameOfFileToSearch;
+		public string BaseMachineParameters => "Parameters.txt";
+		public string ParametersFilesPaths => "machinepaths.txt";
+		public static string LogFilePath => "output_log.txt";
 		public string NameOfFileToSearch
 		{
 			get { return _nameOfFileToSearch; }
@@ -182,7 +178,7 @@ namespace Rico.ViewModels
 
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
-				Document.WriteToLogFile(_logFilePath, $"'{BaseMachineParameters}' file is missing. Method: '{GetCurrentMethod()}'");
+				Document.WriteToLogFile(LogFilePath, $"'{BaseMachineParameters}' file is missing. Method: '{GetCurrentMethod()}'");
 				return false;
 			}
 
@@ -198,7 +194,7 @@ namespace Rico.ViewModels
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
-				Document.WriteToLogFile(_logFilePath, $"Didn't find any 'machineparameters.txt' file. Method: '{nameof(GetPathsOfParametersFiles)}'");
+				Document.WriteToLogFile(LogFilePath, $"Didn't find any 'machineparameters.txt' file. Method: '{nameof(GetPathsOfParametersFiles)}'");
 				return false;
 			}
 
@@ -206,7 +202,7 @@ namespace Rico.ViewModels
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
 			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
 				DisplayParametersErrorMessages(validationProperties);
-				Document.WriteToLogFile(_logFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(validationProperties.ValidateListedParameters)}'");
+				Document.WriteToLogFile(LogFilePath, $"Failed to validate all the parameters from the list box. Method: '{nameof(validationProperties.ValidateListedParameters)}'");
 				return false;
 			}
 
@@ -219,7 +215,7 @@ namespace Rico.ViewModels
 					_currentMachineParametersFile = file;
 					if (!CollectValidParameter(parameterFromList, parameter)) {
 						UpdateStatusBar($"Error collecting values");
-						Document.WriteToLogFile(_logFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
+						Document.WriteToLogFile(LogFilePath, $"Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect. Method: '{nameof(CollectValidParameter)}'");
 						return false;
 					}
 				}
@@ -227,14 +223,14 @@ namespace Rico.ViewModels
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
-					Document.WriteToLogFile(_logFilePath, $"Error collecting values on parameter '{parameter.Name}', name returned empty. Method: {GetCurrentMethod()}");
+					Document.WriteToLogFile(LogFilePath, $"Error collecting values on parameter '{parameter.Name}', name returned empty. Method: {GetCurrentMethod()}");
 					return false;
 				}
 				SaveParameterToCSV(parameter.Name, parameter.Average.ToString());
 			}
 			Document.AppendToFile(_CSVFilePath, "\n");
 			UpdateStatusBar("Collected successfully");
-			Document.WriteToLogFile(_logFilePath, $"Collected values successfully");
+			Document.WriteToLogFile(LogFilePath, $"Collected values successfully");
 			return true;
 		}
 		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
@@ -274,15 +270,23 @@ namespace Rico.ViewModels
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
 			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories).ToList();
+
 			if (!paths.Any()) return false;
+
 			for (int i = paths.Count - 1; i >= 0; i--) {
 				// Check if the file is in a folder that the user wants to see (ex: contains the name/model of the machine)
 				if (!paths[i].ToLower().Contains(NameOfFileToSearch.ToLower())) {
 					paths.RemoveAt(i);
 					continue;
 				}
-				// Check if the file is not of an incompatible version
-				if (Document.YieldReturnLinesFromFile(paths[i]).Skip(2).First().Contains("V2.2.10"))
+				// Check if the file is of an incompatible version
+				var listOfIncompatibleFileVersions = new Collection<string>() { "V2.2.10", /* Vx.x.xx */ };
+
+				var versionLine = Document.YieldReturnLinesFromFile(paths[i]).Skip(2).First();
+
+				var isIncompatible = listOfIncompatibleFileVersions.Any(version => versionLine.Contains(version));
+
+				if (isIncompatible)
 					paths.RemoveAt(i);
 			}
 			Document.WriteToFile(ParametersFilesPaths, paths.ToArray());

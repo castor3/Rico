@@ -20,4 +20,5 @@
 18 - Write secondary messages to .log file															<<<DONE>>>
 19 - Search for parameters files only on folders which name match the value of the textbox			<<<DONE>>>
 20 - Add logic to see if .csv file has more lines after running the test "TestMultipleParameters()"
-21 - Find version of "machinesparameters.txt" file and ignore it if it's incompatible version		<<<DONE>>>
+21 - Find version of "machinesparameters.txt" file and ignore if it's an incompatible version		<<<DONE>>>
+22 - Add handler for global uncaught exceptions														<<<DONE>>>
