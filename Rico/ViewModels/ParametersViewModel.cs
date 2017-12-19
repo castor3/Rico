@@ -32,10 +32,8 @@ namespace Rico.ViewModels
 		}
 
 		#region Fields
-		string _currentMachineParametersFile = string.Empty;
-		IList<string> _listOfParametersCode = new List<string>();
-		IEnumerable<string> _listOfValidParameters;
-		bool _isFirstCycle = true;
+		private IList<string> _listOfParametersCode = new List<string>();
+		private IEnumerable<string> _listOfValidParameters;
 		#endregion
 
 		#region Properties
@@ -177,21 +175,26 @@ namespace Rico.ViewModels
 				return false;
 			}
 
+
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
-				Document.WriteToLogFile(LogFilePath, $"In method: '{GetCurrentMethod()}()' -> '{BaseMachineParameters}' file is missing.");
+				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValues)}()' -> '{BaseMachineParameters}' file is missing.");
 				return false;
 			}
 
-			if (_listOfParametersCode.Any())
-				_listOfParametersCode.Clear();
+
+			if (_listOfParametersCode.Count > 0)
+				_listOfParametersCode = new List<string>();
+
 
 			foreach (var item in ParametersCollection) {
 				_listOfParametersCode.Add(item.Code + " =");
 			}
 
+
 			if (string.IsNullOrWhiteSpace(InitialPathBoxContent))
 				InitialPathBoxContent = Directory.GetCurrentDirectory();
+
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
@@ -199,28 +202,31 @@ namespace Rico.ViewModels
 				return false;
 			}
 
+
 			var validationProperties = new ParameterValidation();
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
-			if (validationProperties.NumberOfParametersNotFound > 0/* || validationProperties.NumberOfDuplicates > 0*/) {
+			if (validationProperties.NumberOfParametersNotFound > 0) {
 				DisplayParametersErrorMessages(validationProperties);
 				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(validationProperties.ValidateListedParameters)}()' -> Failed to validate all the parameters from the list box.");
 				return false;
 			}
 
+
 			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
 
-			var parameterDataToSaveToCSV = new StringBuilder().Append($"--> Values for: '{NameOfFileToSearch}'\n");
+			var parameterDataToSaveToCSV = new StringBuilder($"--> Values for: '{NameOfFileToSearch}'\n");
+
 			foreach (var parameterFromList in _listOfValidParameters) {
 				var parameter = new Parameter();
-				_isFirstCycle = true;
+
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
-					_currentMachineParametersFile = file;
-					if (!CollectValidParameter(parameterFromList, parameter)) {
+					if (!parameter.CollectValidParameter(parameterFromList, file)) {
 						UpdateStatusBar($"Error collecting values");
-						Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValidParameter)}()' -> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect.");
+						Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(parameter.CollectValidParameter)}()' -> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect.");
 						return false;
 					}
 				}
+
 				parameter.Average /= parameter.NumberOfOcurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
@@ -235,48 +241,19 @@ namespace Rico.ViewModels
 
 				if (parameter.Name == string.Empty) {
 					UpdateStatusBar("Error collecting values");
-					Document.WriteToLogFile(LogFilePath, $"In method: '{GetCurrentMethod()}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
+					Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValues)}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
 				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
 			}
+
 			Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n");
+
 			UpdateStatusBar("Collected successfully");
-			Document.WriteToLogFile(LogFilePath, $"Collected values successfully");
+
+			Document.WriteToLogFile(LogFilePath, "Collected values successfully");
+
 			return true;
-		}
-		private bool CollectValidParameter(string parameterFromList, Parameter parameter)
-		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			parameter.ParameterLine = GetParameterFromFile(parameterFromList);
-
-			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
-			// Anyway, it will proceed ('return true;') to the next file without throwing an error
-			if (string.IsNullOrWhiteSpace(parameter.ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
-
-			parameter.NumberOfOcurrences++;
-
-			if (_isFirstCycle) {
-				parameter.GetParameterName();
-				_isFirstCycle = false;
-			}
-
-			parameter.GetParameterValue();
-			var parameterValue = parameter.Value;
-
-			if (string.IsNullOrWhiteSpace(parameterValue)) {
-				if (parameter.Ignore)
-					return true;
-				return false;
-			}
-
-			var parameterValueAsDouble = 0.0d;
-			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
-				return false;
-			}
-			else {
-				parameter.Average += parameterValueAsDouble;
-				return true;
-			}
 		}
 		private bool GetPathsOfParametersFiles()
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
@@ -306,33 +283,9 @@ namespace Rico.ViewModels
 		}
 		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
 		{// !!! Messages will override each other if they happen to be written to the screen at the same time
-			if (paramValidation.NumberOfParametersNotFound > 0) {
-				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
-					paramValidation.ParametersNotFound + "Por favor verifique o texto inserido");
-			}
-			//if (paramValidation.NumberOfDuplicates > 0) {
-			//	MessageBox.Show("Encontrou mais do que 1 ocorrência do(s) seguinte(s) parâmetro(s):\n" +
-			//		paramValidation.DuplicatedParameters + "Por favor verifique o parâmetro introduzido");
-			//}
+			MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
+				paramValidation.ParametersNotFound + "Por favor verifique o texto inserido");
 		}
-		private string GetParameterFromFile(string parameterFromList)
-		{// Retrieves, from the parameters file, the full line of the parameter passed
-			var array = parameterFromList.Split(',');
-			var hasSplited = array.Count() > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(_currentMachineParametersFile)) {
-				if (hasSplited) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
-						return item;
-				}
-				else {
-					if (item.Contains(parameterFromList))
-						return item;
-				}
-			}
-			return string.Empty;
-		}
-		[MethodImpl(MethodImplOptions.NoInlining)]
-		public string GetCurrentMethod() => new StackTrace().GetFrame(1).GetMethod().Name;
 		#region StatusBar
 		// Status bar update
 		private void SetStatusBarTimer()

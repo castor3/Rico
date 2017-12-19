@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using SupportFiles;
 
 namespace Rico.Models
 {
@@ -12,6 +13,7 @@ namespace Rico.Models
 		private double _average;
 		private string _code;
 		private bool _ignore;
+		private bool _isFirstCycle = true;
 
 		public string Name
 		{
@@ -61,6 +63,12 @@ namespace Rico.Models
 			get { return _ignore; }
 			set { _ignore = value; }
 		}
+		public bool IsFirstCycle
+		{
+			get { return _isFirstCycle; }
+			set { _isFirstCycle = value; }
+		}
+
 
 		// Methods
 		public bool GetParameterName()
@@ -121,6 +129,55 @@ namespace Rico.Models
 			}
 			if (!regexResult.Success) return null;
 			return regexResult;
+		}
+		public bool CollectValidParameter(string parameterFromList, string currentMachineParametersFile)
+		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
+			ParameterLine = GetParameterFromFile(parameterFromList, currentMachineParametersFile);
+
+			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
+			// Anyway, it will proceed ('return true;') to the next file without throwing an error
+			if (string.IsNullOrWhiteSpace(ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
+
+			NumberOfOcurrences++;
+
+			if (IsFirstCycle) {
+				GetParameterName();
+				IsFirstCycle = false;
+			}
+
+			GetParameterValue();
+			var parameterValue = Value;
+
+			if (string.IsNullOrWhiteSpace(parameterValue)) {
+				if (Ignore)
+					return true;
+				return false;
+			}
+
+			var parameterValueAsDouble = 0.0d;
+			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
+				return false;
+			}
+			else {
+				Average += parameterValueAsDouble;
+				return true;
+			}
+		}
+		private string GetParameterFromFile(string parameterFromList, string currentMachineParametersFile)
+		{// Retrieves, from the parameters file, the full line of the parameter passed
+			var array = parameterFromList.Split(',');
+			var hasSplited = array.Count() > 1;
+			foreach (var item in Document.YieldReturnLinesFromFile(currentMachineParametersFile)) {
+				if (hasSplited) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
+						return item;
+				}
+				else {
+					if (item.Contains(parameterFromList))
+						return item;
+				}
+			}
+			return string.Empty;
 		}
 	}
 }

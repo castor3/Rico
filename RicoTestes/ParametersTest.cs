@@ -22,6 +22,7 @@ namespace RicoTestes
 			var finalCount = viewModel.ParametersCollection.Count;
 			Assert.AreNotEqual(initialCount, finalCount);
 		}
+
 		[TestMethod]
 		public void RemoveParameterTest()
 		{
@@ -86,7 +87,9 @@ namespace RicoTestes
 
 			GetParameterCodeFromEachOfTheChosenLines(viewModel, lines);
 
-			viewModel.CollectValues();
+			var result = viewModel.CollectValues();
+
+			Assert.IsTrue(result);
 		}
 		private static void GetParameterCodeFromEachOfTheChosenLines(ParametersViewModel viewModel, string[] lines)
 		{
