@@ -64,7 +64,7 @@ namespace Rico
 		 // Why: Simply to know if the parameter exists in the file
 			var array = parameter.Split(',');
 			var arrayIsNotNullOrEmpty = array.Length > 0;
-			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
+			foreach (var item in Document.ReadFromFile(path)) {
 				if (arrayIsNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return true;
@@ -83,7 +83,7 @@ namespace Rico
 			var found = 0;
 			var array = parameter.Split(',');
 			var arrayNotNullOrEmpty = (array.Length < 1);
-			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
+			foreach (var item in Document.ReadFromFile(path)) {
 				if (arrayNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						if (++found > 1) return true;

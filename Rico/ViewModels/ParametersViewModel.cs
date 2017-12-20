@@ -199,7 +199,9 @@ namespace Rico.ViewModels
 
 			if (!GetPathsOfParametersFiles()) {
 				UpdateStatusBar("Failed to find parameters files");
-				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(GetPathsOfParametersFiles)}()' -> Didn't find any 'machineparameters.txt' file.");
+				Document.WriteToLogFile(LogFilePath,
+										$"In method: '{nameof(GetPathsOfParametersFiles)}()' " +
+										"-> Didn't find any 'machineparameters.txt' file.");
 				return false;
 			}
 
@@ -209,7 +211,9 @@ namespace Rico.ViewModels
 
 			if (validationProperties.NumberOfParametersNotFound > 0) {
 				validationProperties.DisplayParametersErrorMessages();
-				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(validationProperties.ValidateListedParameters)}()' -> Failed to validate all the parameters from the list box.");
+				Document.WriteToLogFile(LogFilePath,
+										$"In method: '{nameof(validationProperties.ValidateListedParameters)}()' " +
+										"-> Failed to validate all the parameters from the list box.");
 				return false;
 			}
 
@@ -223,19 +227,20 @@ namespace Rico.ViewModels
 			foreach (var parameterFromList in _listOfValidParameters) {
 				var parameter = new Parameter();
 
-				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
+				foreach (var file in Document.ReadFromFile(ParametersFilesPaths)) {
 
 					if (!parameter.GetParameterFromFile(parameterFromList, file)) return false;
-
+					
 					// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
 					// Anyway, it will proceed ('continue;') to the next file without throwing an error
 					if (string.IsNullOrWhiteSpace(parameter.ParameterLine)) continue;
 
-					var collectedParametersSuccessfuly = parameter.CollectValidParameter();
-
-					if (!collectedParametersSuccessfuly) {
+					if (!parameter.CollectValidParameter()) {
 						UpdateStatusBar($"Error collecting values");
-						Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(parameter.CollectValidParameter)}()' -> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect.");
+						Document.WriteToLogFile(LogFilePath,
+												$"In method: '{nameof(parameter.CollectValidParameter)}()' " +
+												"-> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' " +
+												"doesn't have a value to collect.");
 						return false;
 					}
 				}
@@ -247,7 +252,9 @@ namespace Rico.ViewModels
 
 				if (string.IsNullOrWhiteSpace(parameter.Name)) {
 					UpdateStatusBar("Error collecting values");
-					Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValues)}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
+					Document.WriteToLogFile(LogFilePath,
+											$"In method: '{nameof(CollectValues)}()' " +
+											"-> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
 				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
@@ -275,7 +282,7 @@ namespace Rico.ViewModels
 				// Check if the file is of an incompatible version
 				var listOfIncompatibleFileVersions = new Collection<string>() { "V2.2.10", /* Vx.x.xx */ };
 
-				var versionLine = Document.YieldReturnLinesFromFile(paths[i]).Skip(2).First();
+				var versionLine = Document.ReadSpecificLineFromFile(paths[i], 2);
 
 				var isIncompatible = listOfIncompatibleFileVersions.Any(version => versionLine.Contains(version));
 

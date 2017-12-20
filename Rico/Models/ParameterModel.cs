@@ -74,7 +74,7 @@ namespace Rico.Models
 		// Methods
 		public bool CollectValidParameter()
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-
+			
 			_numberOfOccurrences++;
 
 			if (IsFirstCycle) {
@@ -101,7 +101,7 @@ namespace Rico.Models
 		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = parameterFromList.Split(',');
 			var hasSplited = array.Length > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(machineParametersFile)) {
+			foreach (var item in Document.ReadFromFile(machineParametersFile)) {
 				if (hasSplited) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
 						ParameterLine = item;
@@ -183,7 +183,7 @@ namespace Rico.Models
 		{
 			Match regexResult;
 			try {
-				regexResult = Regex.Match(ParameterLine, @"=\s*([0-9]*\.?[0-9]*)");
+				regexResult = Regex.Match(ParameterLine, @"=?\s*([0-9]*\.?[0-9]*)");
 				//Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
 				//							.Where(c => c != "." && c.Trim() != "")
 				//							.First();

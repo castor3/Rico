@@ -75,7 +75,7 @@ namespace RicoTestes
 			var linesFromFile = new Collection<string>();
 
 			// Get all valid lines from the parameters file
-			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
+			foreach (var item in Document.ReadFromFile(path)) {
 				if (string.IsNullOrWhiteSpace(item) || !item.Contains("="))
 					continue;
 				else
@@ -228,7 +228,7 @@ namespace RicoTestes
 			var path = new ParametersViewModel().BaseMachineParameters;
 
 			foreach (var item in randomValues) {
-				parameterLines.Add(Document.YieldReturnLinesFromFile(path).Skip(item).First());
+				parameterLines.Add(Document.ReadSpecificLineFromFile(path, item));
 			}
 
 			return parameterLines;
