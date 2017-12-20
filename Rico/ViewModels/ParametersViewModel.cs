@@ -185,8 +185,7 @@ namespace Rico.ViewModels
 			}
 
 
-			if (_listOfParametersCode.Count > 0)
-				_listOfParametersCode = new List<string>();
+			_listOfParametersCode = new List<string>();
 
 
 			foreach (var item in ParametersCollection) {
@@ -216,7 +215,9 @@ namespace Rico.ViewModels
 
 			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
 
+
 			var parameterDataToSaveToCSV = new StringBuilder($"--> Values for: '{NameOfFileToSearch}'\n");
+
 
 			foreach (var parameterFromList in _listOfValidParameters) {
 				var parameter = new Parameter();
@@ -232,7 +233,8 @@ namespace Rico.ViewModels
 				parameter.Average /= parameter.NumberOfOcurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
-				if (parameter.Name.Contains(",")) {
+				// Remove ',' from parameter.Name
+				if (parameter.Name.Contains(',')) {
 					var newName = new StringBuilder();
 					foreach (var item in parameter.Name) {
 						if (!item.Equals(','))
@@ -260,7 +262,7 @@ namespace Rico.ViewModels
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
 			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories).ToList();
 
-			if (!(paths.Count > 0)) return false;
+			if (paths.Count <= 0) return false;
 
 			for (int i = paths.Count - 1; i >= 0; i--) {
 				// Check if the file is in a folder that the user wants to see (ex: contains the name/model of the machine)

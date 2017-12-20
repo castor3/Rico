@@ -26,3 +26,10 @@
 24 - Add name/model of the machine (from the textbox) to the beginning of each set of values collected	<<<DONE>>>
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
 
+
+
+Issue --->>>  Environment.NewLine stopped working in "Document -> SupportFiles.dll"  -.-
+
+
+refactor entire "CollectValidParameter()"
+

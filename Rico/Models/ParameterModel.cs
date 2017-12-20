@@ -71,41 +71,6 @@ namespace Rico.Models
 
 
 		// Methods
-		public bool GetParameterName()
-		{
-			var regexResult = RegexNameAndCode();
-			if (regexResult == null) return false;
-
-			var parameterName = string.Empty;
-			if (regexResult.Groups.Count == 4)
-				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
-
-			Name = parameterName;
-			return true;
-		}
-		public bool GetParameterValue()
-		{// Uses the entire parameter line to extract the value (as string)
-			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
-			
-			var index = (byte)ParameterLine.IndexOf('=');
-			ParameterLine = ParameterLine.Substring(index + 1).Trim();
-
-			// This means that the ParameterLine does not contain any value after the '='
-			if (string.IsNullOrWhiteSpace(ParameterLine)) {
-				Ignore = true;
-				return false;
-			}
-
-			try {
-				Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
-											.Where(c => c != "." && c.Trim() != "")
-											.First();
-			}
-			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return false;
-			}
-			return true;
-		}
 		public bool GetParameterCode()
 		{
 			var regexResult = RegexNameAndCode();
@@ -131,9 +96,9 @@ namespace Rico.Models
 			if (!regexResult.Success) return null;
 			return regexResult;
 		}
-		public bool CollectValidParameter(string parameterFromList, string currentMachineParametersFile)
+		public bool CollectValidParameter(string parameterFromList, string machineParametersFile)
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			ParameterLine = GetParameterFromFile(parameterFromList, currentMachineParametersFile);
+			if(!GetParameterFromFile(parameterFromList, machineParametersFile)) return false;
 
 			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
 			// Anyway, it will proceed ('return true;') to the next file without throwing an error
@@ -162,21 +127,59 @@ namespace Rico.Models
 				return true;
 			}
 		}
-		private string GetParameterFromFile(string parameterFromList, string currentMachineParametersFile)
+		private bool GetParameterFromFile(string parameterFromList, string machineParametersFile)
 		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = parameterFromList.Split(',');
 			var hasSplited = array.Length > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(currentMachineParametersFile)) {
+			foreach (var item in Document.YieldReturnLinesFromFile(machineParametersFile)) {
 				if (hasSplited) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
-						return item;
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
+						ParameterLine =  item;
+						return true;
+					}
 				}
 				else {
-					if (item.Contains(parameterFromList))
-						return item;
+					if (item.Contains(parameterFromList)) {
+						ParameterLine = item;
+						return true;
+					}
 				}
 			}
-			return string.Empty;
+			return false;
+		}
+		public bool GetParameterName()
+		{
+			var regexResult = RegexNameAndCode();
+			if (regexResult == null) return false;
+
+			var parameterName = string.Empty;
+			if (regexResult.Groups.Count == 4)
+				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
+
+			Name = parameterName;
+			return true;
+		}
+		public bool GetParameterValue()
+		{// Uses the entire parameter line to extract the value (as string)
+			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
+			var index = (byte)ParameterLine.IndexOf('=');
+			ParameterLine = ParameterLine.Substring(index + 1).Trim();
+
+			// This means that the ParameterLine does not contain any value after the '='
+			if (string.IsNullOrWhiteSpace(ParameterLine)) {
+				Ignore = true;
+				return false;
+			}
+
+			try {
+				Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
+											.Where(c => c != "." && c.Trim() != "")
+											.First();
+			}
+			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
+				return false;
+			}
+			return true;
 		}
 	}
 }
