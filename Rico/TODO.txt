@@ -27,9 +27,4 @@
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
 
 
-
-Issue --->>>  Environment.NewLine stopped working in "Document -> SupportFiles.dll"  -.-
-
-
 refactor entire "CollectValidParameter()"
-

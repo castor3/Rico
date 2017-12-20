@@ -206,6 +206,7 @@ namespace Rico.ViewModels
 
 			var validationProperties = new ParameterValidation();
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
+
 			if (validationProperties.NumberOfParametersNotFound > 0) {
 				validationProperties.DisplayParametersErrorMessages();
 				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(validationProperties.ValidateListedParameters)}()' -> Failed to validate all the parameters from the list box.");
@@ -223,27 +224,28 @@ namespace Rico.ViewModels
 				var parameter = new Parameter();
 
 				foreach (var file in Document.YieldReturnLinesFromFile(ParametersFilesPaths)) {
-					if (!parameter.CollectValidParameter(parameterFromList, file)) {
+
+					if (!parameter.GetParameterFromFile(parameterFromList, file)) return false;
+
+					// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
+					// Anyway, it will proceed ('continue;') to the next file without throwing an error
+					if (string.IsNullOrWhiteSpace(parameter.ParameterLine)) continue;
+
+					var collectedParametersSuccessfuly = parameter.CollectValidParameter();
+
+					if (!collectedParametersSuccessfuly) {
 						UpdateStatusBar($"Error collecting values");
 						Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(parameter.CollectValidParameter)}()' -> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' doesn't have a value to collect.");
 						return false;
 					}
 				}
 
-				parameter.Average /= parameter.NumberOfOcurrences;
+				parameter.Average /= parameter.NumberOfOccurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
-				// Remove ',' from parameter.Name
-				if (parameter.Name.Contains(',')) {
-					var newName = new StringBuilder();
-					foreach (var item in parameter.Name) {
-						if (!item.Equals(','))
-							newName.Append(item);
-					}
-					parameter.Name = newName.ToString();
-				}
+				parameter.Name.Remove(parameter.Name.IndexOf(','), 1);
 
-				if (parameter.Name == string.Empty) {
+				if (string.IsNullOrWhiteSpace(parameter.Name)) {
 					UpdateStatusBar("Error collecting values");
 					Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValues)}()' -> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
@@ -251,10 +253,10 @@ namespace Rico.ViewModels
 				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
 			}
 
-			if(!Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n")) return false;
+			if (!Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n")) return false;
 
 			UpdateStatusBar("Collected successfully");
-			
+
 			return Document.WriteToLogFile(LogFilePath, "Collected values successfully");
 		}
 		private bool GetPathsOfParametersFiles()
@@ -280,7 +282,7 @@ namespace Rico.ViewModels
 				if (isIncompatible)
 					paths.RemoveAt(i);
 			}
-			
+
 			return Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
 		}
 		#region StatusBar
