@@ -14,6 +14,7 @@ namespace Rico.Models
 		private string _code;
 		private bool _ignore;
 		private bool _isFirstCycle = true;
+		private int _numberOfOccurrences;
 
 		public string Name
 		{
@@ -47,7 +48,7 @@ namespace Rico.Models
 					_average = value;
 			}
 		}
-		public int NumberOfOcurrences { get; set; }
+		public int NumberOfOccurrences { get { return _numberOfOccurrences; } }
 		public string Code
 		{
 			get {
@@ -71,6 +72,52 @@ namespace Rico.Models
 
 
 		// Methods
+		public bool CollectValidParameter()
+		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
+
+			_numberOfOccurrences++;
+
+			if (IsFirstCycle) {
+				GetParameterName();
+				IsFirstCycle = false;
+			}
+
+			GetParameterValue();
+
+			if (string.IsNullOrWhiteSpace(Value)) {
+				return Ignore;
+			}
+
+			var parameterValueAsDouble = 0.0d;
+			if (!double.TryParse(Value, out parameterValueAsDouble)) {
+				return false;
+			}
+			else {
+				Average += parameterValueAsDouble;
+				return true;
+			}
+		}
+		public bool GetParameterFromFile(string parameterFromList, string machineParametersFile)
+		{// Retrieves, from the parameters file, the full line of the parameter passed
+			var array = parameterFromList.Split(',');
+			var hasSplited = array.Length > 1;
+			foreach (var item in Document.YieldReturnLinesFromFile(machineParametersFile)) {
+				if (hasSplited) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
+						ParameterLine = item;
+						return true;
+					}
+				}
+				else {
+					if (item.Contains(parameterFromList)) {
+						ParameterLine = item;
+						return true;
+					}
+				}
+			}
+			ParameterLine = string.Empty;
+			return false;
+		}
 		public bool GetParameterCode()
 		{
 			var regexResult = RegexNameAndCode();
@@ -83,78 +130,18 @@ namespace Rico.Models
 			Code = parameterCode;
 			return true;
 		}
-		private Match RegexNameAndCode()
-		{
-			Match regexResult;
-			try {
-				// escapes -> -  .  ,  /  \  "  )  ( 
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
-			}
-			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return null;
-			}
-			if (!regexResult.Success) return null;
-			return regexResult;
-		}
-		public bool CollectValidParameter(string parameterFromList, string machineParametersFile)
-		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			if(!GetParameterFromFile(parameterFromList, machineParametersFile)) return false;
-
-			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
-			// Anyway, it will proceed ('return true;') to the next file without throwing an error
-			if (string.IsNullOrWhiteSpace(ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
-
-			NumberOfOcurrences++;
-
-			if (IsFirstCycle) {
-				GetParameterName();
-				IsFirstCycle = false;
-			}
-
-			GetParameterValue();
-			var parameterValue = Value;
-
-			if (string.IsNullOrWhiteSpace(parameterValue)) {
-				return Ignore;
-			}
-
-			var parameterValueAsDouble = 0.0d;
-			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
-				return false;
-			}
-			else {
-				Average += parameterValueAsDouble;
-				return true;
-			}
-		}
-		private bool GetParameterFromFile(string parameterFromList, string machineParametersFile)
-		{// Retrieves, from the parameters file, the full line of the parameter passed
-			var array = parameterFromList.Split(',');
-			var hasSplited = array.Length > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(machineParametersFile)) {
-				if (hasSplited) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
-						ParameterLine =  item;
-						return true;
-					}
-				}
-				else {
-					if (item.Contains(parameterFromList)) {
-						ParameterLine = item;
-						return true;
-					}
-				}
-			}
-			return false;
-		}
 		public bool GetParameterName()
 		{
 			var regexResult = RegexNameAndCode();
+
 			if (regexResult == null) return false;
 
 			var parameterName = string.Empty;
 			if (regexResult.Groups.Count == 4)
 				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
+			else
+				return false;
+
 
 			Name = parameterName;
 			return true;
@@ -162,6 +149,7 @@ namespace Rico.Models
 		public bool GetParameterValue()
 		{// Uses the entire parameter line to extract the value (as string)
 			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
+
 			var index = (byte)ParameterLine.IndexOf('=');
 			ParameterLine = ParameterLine.Substring(index + 1).Trim();
 
@@ -171,15 +159,40 @@ namespace Rico.Models
 				return false;
 			}
 
+			var regexResult = RegexValue();
+
+			if (!regexResult.Success) return false;
+
+			Value = regexResult.Groups[1].Value;
+
+			return true;
+		}
+		public Match RegexNameAndCode()
+		{
+			Match regexResult;
 			try {
-				Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
-											.Where(c => c != "." && c.Trim() != "")
-											.First();
+				// escapes -> -  .  ,  /  \  "  )  ( 
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return false;
+				return null;
 			}
-			return true;
+			return regexResult;
+		}
+		public Match RegexValue()
+		{
+			Match regexResult;
+			try {
+				regexResult = Regex.Match(ParameterLine, @"=\s*([0-9]*\.?[0-9]*)");
+				//Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
+				//							.Where(c => c != "." && c.Trim() != "")
+				//							.First();
+			}
+			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
+				return null;
+			}
+
+			return regexResult;
 		}
 	}
 }
