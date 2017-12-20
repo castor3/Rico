@@ -1,20 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Rico.Models;
+using System.Windows;
 using SupportFiles;
 
 namespace Rico
 {
 	public class ParameterValidation
 	{
-		//public ParameterValidation()
-		//{
-		//	AppDomain currentDomain = AppDomain.CurrentDomain;
-		//	currentDomain.UnhandledException += new UnhandledExceptionEventHandler(ExceptionHandler.HandleGeneralException);
-		//}
-
 		private string _parametersNotFound;
 		private ICollection<string> _duplicatedParameters = new Collection<string>();
 		private int _numberOfParametersNotFound;
@@ -71,7 +64,7 @@ namespace Rico
 		{// What: Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
 		 // Why: Simply to know if the parameter exists in the file
 			var array = parameter.Split(',');
-			var arrayIsNotNullOrEmpty = array.Any();
+			var arrayIsNotNullOrEmpty = array.Length > 0;
 			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
 				if (arrayIsNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
@@ -90,7 +83,7 @@ namespace Rico
 		 //		more than once, there's something wrong, and so the user will have to rechecked what he typed
 			var found = 0;
 			var array = parameter.Split(',');
-			var arrayNotNullOrEmpty = (array.Count() < 1);
+			var arrayNotNullOrEmpty = (array.Length < 1);
 			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
 				if (arrayNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
@@ -102,6 +95,12 @@ namespace Rico
 				}
 			}
 			return false;
+		}
+		public void DisplayParametersErrorMessages()
+		{// !!! Messages will override each other if they happen to be written to the screen at the same time
+			if (!string.IsNullOrWhiteSpace(ParametersNotFound))
+				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
+						ParametersNotFound + "Por favor verifique o texto inserido");
 		}
 	}
 }

@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.Models;
 using Rico.ViewModels;
@@ -12,6 +13,7 @@ namespace RicoTestes
 	[TestClass]
 	public class ParametersTest
 	{
+		// ParametersViewModel.cs
 		[TestMethod]
 		public void AddParameterTest()
 		{
@@ -42,12 +44,14 @@ namespace RicoTestes
 		public void PreventDuplicateParameterTest()
 		{
 			var viewModel = new ParametersViewModel();
+
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 			var initialCount = viewModel.ParametersCollection.Count;
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 			var finalCount = viewModel.ParametersCollection.Count;
+
 			Assert.AreEqual(initialCount, finalCount);
 		}
 
@@ -71,13 +75,13 @@ namespace RicoTestes
 			var linesFromFile = new Collection<string>();
 
 			foreach (var item in Document.YieldReturnLinesFromFile(path)) {
-				if (string.IsNullOrWhiteSpace(item) || !item.Contains('='))
+				if (string.IsNullOrWhiteSpace(item) || !item.Contains("="))
 					continue;
 				else
 					linesFromFile.Add(item);
 			}
 
-			if (!linesFromFile.Any()) Assert.Fail();
+			if (!(linesFromFile.Count > 0)) Assert.Fail();
 
 			var collectionOfRandomValues = GenerateRandomValues(numberOfParametersToTest, linesFromFile);
 
@@ -131,6 +135,58 @@ namespace RicoTestes
 			TestMultipleParameters();
 			var finalSize = new FileInfo(viewModel.CSVFilePath).Length;
 			Assert.AreNotEqual(initialSize, finalSize);
+		}
+
+		[TestMethod]
+		public void CollectValues_NameOfFileToSearchIsEmpty_ReturnFalse()
+		{
+			var viewModel = new ParametersViewModel { NameOfFileToSearch = string.Empty };
+			var result = viewModel.CollectValues();
+
+			Assert.IsFalse(result);
+		}
+
+		[TestMethod]
+		public void CollectValues_BaseMachinesParametersNotExists_ReturnFalse()
+		{
+			// Arrange
+			var viewModel = new ParametersViewModel();
+
+			// Act
+			var collectResult = viewModel.CollectValues();
+
+			// Assert
+			if (!File.Exists(viewModel.BaseMachineParameters))
+				Assert.IsFalse(collectResult);
+		}
+
+
+		// ParameterModel.cs
+		[TestMethod]
+		public void GetParameterValue_ParameterLineIsNullOrWhiteSpace_ReturnFalse()
+		{
+			// Arrange
+			var paramModel = new Parameter { ParameterLine = string.Empty };
+
+			// Act
+			var result = paramModel.GetParameterValue();
+
+			// Assert
+			Assert.IsFalse(result);
+		}
+
+		[TestMethod]
+		public void RegexNameAndCode_ParameterLineIsNullOrEmpty_ReturnFalse()
+		{
+			// Arrange
+			var paramModel = new Parameter { ParameterLine = string.Empty };
+			var privateObject = new PrivateObject(paramModel);
+
+			// Act
+			var result = (Match)privateObject.Invoke("RegexNameAndCode");
+
+			// Assert
+			Assert.IsNull(result);
 		}
 	}
 }

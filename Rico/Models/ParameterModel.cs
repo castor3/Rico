@@ -86,6 +86,7 @@ namespace Rico.Models
 		public bool GetParameterValue()
 		{// Uses the entire parameter line to extract the value (as string)
 			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
+			
 			var index = (byte)ParameterLine.IndexOf('=');
 			ParameterLine = ParameterLine.Substring(index + 1).Trim();
 
@@ -149,9 +150,7 @@ namespace Rico.Models
 			var parameterValue = Value;
 
 			if (string.IsNullOrWhiteSpace(parameterValue)) {
-				if (Ignore)
-					return true;
-				return false;
+				return Ignore;
 			}
 
 			var parameterValueAsDouble = 0.0d;
@@ -166,7 +165,7 @@ namespace Rico.Models
 		private string GetParameterFromFile(string parameterFromList, string currentMachineParametersFile)
 		{// Retrieves, from the parameters file, the full line of the parameter passed
 			var array = parameterFromList.Split(',');
-			var hasSplited = array.Count() > 1;
+			var hasSplited = array.Length > 1;
 			foreach (var item in Document.YieldReturnLinesFromFile(currentMachineParametersFile)) {
 				if (hasSplited) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))

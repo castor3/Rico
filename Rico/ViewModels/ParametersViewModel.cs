@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -148,7 +146,11 @@ namespace Rico.ViewModels
 		private bool CanRemoveParameter()
 		{
 			if (_parametersCollectionSelectedItem == null) return false;
+
 			return !string.IsNullOrEmpty(_parametersCollectionSelectedItem.Name);
+
+
+			//return !string.IsNullOrEmpty(_parametersCollectionSelectedItem?.Name);
 		}
 		public void RemoveParameter()
 		{
@@ -206,7 +208,7 @@ namespace Rico.ViewModels
 			var validationProperties = new ParameterValidation();
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
 			if (validationProperties.NumberOfParametersNotFound > 0) {
-				DisplayParametersErrorMessages(validationProperties);
+				validationProperties.DisplayParametersErrorMessages();
 				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(validationProperties.ValidateListedParameters)}()' -> Failed to validate all the parameters from the list box.");
 				return false;
 			}
@@ -230,7 +232,7 @@ namespace Rico.ViewModels
 				parameter.Average /= parameter.NumberOfOcurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
-				if (parameter.Name.Contains(',')) {
+				if (parameter.Name.Contains(",")) {
 					var newName = new StringBuilder();
 					foreach (var item in parameter.Name) {
 						if (!item.Equals(','))
@@ -247,20 +249,18 @@ namespace Rico.ViewModels
 				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
 			}
 
-			Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n");
+			if(!Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n")) return false;
 
 			UpdateStatusBar("Collected successfully");
-
-			Document.WriteToLogFile(LogFilePath, "Collected values successfully");
-
-			return true;
+			
+			return Document.WriteToLogFile(LogFilePath, "Collected values successfully");
 		}
 		private bool GetPathsOfParametersFiles()
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
 			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories).ToList();
 
-			if (!paths.Any()) return false;
+			if (!(paths.Count > 0)) return false;
 
 			for (int i = paths.Count - 1; i >= 0; i--) {
 				// Check if the file is in a folder that the user wants to see (ex: contains the name/model of the machine)
@@ -278,13 +278,8 @@ namespace Rico.ViewModels
 				if (isIncompatible)
 					paths.RemoveAt(i);
 			}
-			Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
-			return true;
-		}
-		private void DisplayParametersErrorMessages(ParameterValidation paramValidation)
-		{// !!! Messages will override each other if they happen to be written to the screen at the same time
-			MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
-				paramValidation.ParametersNotFound + "Por favor verifique o texto inserido");
+			
+			return Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
 		}
 		#region StatusBar
 		// Status bar update
