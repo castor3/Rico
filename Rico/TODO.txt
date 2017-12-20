@@ -29,3 +29,8 @@
 
 
 Issue --->>>  Environment.NewLine stopped working in "Document -> SupportFiles.dll"  -.-
+
+
+refactor entire "CollectValidParameter()"
+
+

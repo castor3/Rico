@@ -71,6 +71,84 @@ namespace Rico.Models
 
 
 		// Methods
+		public bool GetParameterCode()
+		{
+			var regexResult = RegexNameAndCode();
+			if (regexResult == null) return false;
+
+			var parameterCode = string.Empty;
+			if (regexResult.Groups.Count == 4)
+				parameterCode = regexResult.Groups[3].Value;
+
+			Code = parameterCode;
+			return true;
+		}
+		private Match RegexNameAndCode()
+		{
+			Match regexResult;
+			try {
+				// escapes -> -  .  ,  /  \  "  )  ( 
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
+			}
+			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
+				return null;
+			}
+			if (!regexResult.Success) return null;
+			return regexResult;
+		}
+		public bool CollectValidParameter(string parameterFromList, string machineParametersFile)
+		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
+			if(!GetParameterFromFile(parameterFromList, machineParametersFile)) return false;
+
+			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
+			// Anyway, it will proceed ('return true;') to the next file without throwing an error
+			if (string.IsNullOrWhiteSpace(ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
+
+			NumberOfOcurrences++;
+
+			if (IsFirstCycle) {
+				GetParameterName();
+				IsFirstCycle = false;
+			}
+
+			GetParameterValue();
+			var parameterValue = Value;
+
+			if (string.IsNullOrWhiteSpace(parameterValue)) {
+				if (Ignore)
+					return true;
+				return false;
+			}
+
+			var parameterValueAsDouble = 0.0d;
+			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
+				return false;
+			}
+			else {
+				Average += parameterValueAsDouble;
+				return true;
+			}
+		}
+		private bool GetParameterFromFile(string parameterFromList, string machineParametersFile)
+		{// Retrieves, from the parameters file, the full line of the parameter passed
+			var array = parameterFromList.Split(',');
+			var hasSplited = array.Count() > 1;
+			foreach (var item in Document.YieldReturnLinesFromFile(machineParametersFile)) {
+				if (hasSplited) {
+					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
+						ParameterLine =  item;
+						return true;
+					}
+				}
+				else {
+					if (item.Contains(parameterFromList)) {
+						ParameterLine = item;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
 		public bool GetParameterName()
 		{
 			var regexResult = RegexNameAndCode();
@@ -104,80 +182,6 @@ namespace Rico.Models
 				return false;
 			}
 			return true;
-		}
-		public bool GetParameterCode()
-		{
-			var regexResult = RegexNameAndCode();
-			if (regexResult == null) return false;
-
-			var parameterCode = string.Empty;
-			if (regexResult.Groups.Count == 4)
-				parameterCode = regexResult.Groups[3].Value;
-
-			Code = parameterCode;
-			return true;
-		}
-		private Match RegexNameAndCode()
-		{
-			Match regexResult;
-			try {
-				// escapes -> -  .  ,  /  \  "  )  ( 
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
-			}
-			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return null;
-			}
-			if (!regexResult.Success) return null;
-			return regexResult;
-		}
-		public bool CollectValidParameter(string parameterFromList, string currentMachineParametersFile)
-		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			ParameterLine = GetParameterFromFile(parameterFromList, currentMachineParametersFile);
-
-			// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
-			// Anyway, it will proceed ('return true;') to the next file without throwing an error
-			if (string.IsNullOrWhiteSpace(ParameterLine)/* || !parameter.ParameterLine.Contains('=')*/) return true;
-
-			NumberOfOcurrences++;
-
-			if (IsFirstCycle) {
-				GetParameterName();
-				IsFirstCycle = false;
-			}
-
-			GetParameterValue();
-			var parameterValue = Value;
-
-			if (string.IsNullOrWhiteSpace(parameterValue)) {
-				if (Ignore)
-					return true;
-				return false;
-			}
-
-			var parameterValueAsDouble = 0.0d;
-			if (!double.TryParse(parameterValue, out parameterValueAsDouble)) {
-				return false;
-			}
-			else {
-				Average += parameterValueAsDouble;
-				return true;
-			}
-		}
-		private string GetParameterFromFile(string parameterFromList, string currentMachineParametersFile)
-		{// Retrieves, from the parameters file, the full line of the parameter passed
-			var array = parameterFromList.Split(',');
-			var hasSplited = array.Count() > 1;
-			foreach (var item in Document.YieldReturnLinesFromFile(currentMachineParametersFile)) {
-				if (hasSplited) {
-					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
-						return item;
-				}
-				else {
-					if (item.Contains(parameterFromList))
-						return item;
-				}
-			}
-			return string.Empty;
 		}
 	}
 }
