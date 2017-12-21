@@ -11,7 +11,7 @@ using SupportFiles;
 namespace RicoTestes
 {
 	[TestClass]
-	public class ParametersTest
+	public class ParametersViewModelTest
 	{
 		// ParametersViewModel.cs
 		[TestMethod]
@@ -29,6 +29,7 @@ namespace RicoTestes
 		public void RemoveParameterTest()
 		{
 			var viewModel = new ParametersViewModel();
+
 			var initialCount = viewModel.ParametersCollection.Count;
 			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
@@ -37,6 +38,7 @@ namespace RicoTestes
 			viewModel.ParametersCollectionSelectedItem = new Parameter { Name = "test" };
 			viewModel.RemoveParameter();
 			var finalCount = viewModel.ParametersCollection.Count;
+
 			Assert.AreEqual(initialCount, finalCount);
 		}
 
@@ -84,7 +86,7 @@ namespace RicoTestes
 
 			if (!(linesFromFile.Count > 0)) Assert.Fail();
 
-			var collectionOfRandomValues = GenerateRandomValues(numberOfParametersToTest);
+			var collectionOfRandomValues = General.GenerateRandomValues(numberOfParametersToTest);
 
 			var lines = new string[50];
 			for (int i = 0; i < numberOfParametersToTest; i++)
@@ -145,108 +147,6 @@ namespace RicoTestes
 			// Assert
 			if (!File.Exists(viewModel.BaseMachineParameters))
 				Assert.IsFalse(collectResult);
-		}
-
-
-		// ParameterModel.cs
-		[TestMethod]
-		public void CollectValidParameter_IfIsFirstCycle_NameHasToChange()
-		{
-			var paramModel = new Parameter { ParameterLine = "  Referênc.ferram.      1485 =    523.44  mm" };
-
-			var name1 = paramModel.Name;
-			paramModel.CollectValidParameter();
-			var name2 = paramModel.Name;
-
-			Assert.AreNotEqual(name1, name2);
-		}
-
-		[TestMethod]
-		public void CollectValidParameter_IfIsFirstCycleIsTrue_HasToBeFalseAfterRunning()
-		{
-			var paramModel = new Parameter { ParameterLine = "  Referênc.ferram.      1485 =    523.44  mm" };
-
-			paramModel.IsFirstCycle = true;
-			paramModel.CollectValidParameter();
-
-			Assert.IsFalse(paramModel.IsFirstCycle);
-		}
-
-		[TestMethod]
-		public void CollectValidParameter_ValueIsNotDigits_ReturnFalse()
-		{
-			var result = true;
-			
-			foreach (var item in GetRandomParameterLines(50)) {
-				// Arrange
-				var paramModel = new Parameter { ParameterLine = item };
-				var parameterValueAsDouble = 0.0d;
-
-				// Act
-				var collectResult = paramModel.CollectValidParameter();
-				var conversionSuccessful = double.TryParse(paramModel.Value, out parameterValueAsDouble);
-
-				// Assert
-				if (!conversionSuccessful && collectResult)
-					result = false;
-			}
-
-			Assert.IsTrue(result);
-		}
-
-		[TestMethod]
-		public void GetParameterValue_ParameterLineIsNullOrWhiteSpace_ReturnFalse()
-		{
-			// Arrange
-			var paramModel = new Parameter { ParameterLine = string.Empty };
-
-			// Act
-			var result = paramModel.GetParameterValue();
-
-			// Assert
-			Assert.IsFalse(result);
-		}
-
-		[TestMethod]
-		public void RegexNameAndCode_ParameterLineIsNullOrEmpty_ReturnFalse()
-		{
-			// Arrange
-			var paramModel = new Parameter { ParameterLine = string.Empty };
-			var privateObject = new PrivateObject(paramModel);
-
-			// Act
-			var result = (Match)privateObject.Invoke("RegexNameAndCode");
-
-			// Assert
-			Assert.IsNull(result);
-		}
-
-		private Collection<string> GetRandomParameterLines(int numberOfLines)
-		{
-			var randomValues = GenerateRandomValues(numberOfLines);
-			var parameterLines = new Collection<string>();
-			var path = new ParametersViewModel().BaseMachineParameters;
-
-			foreach (var item in randomValues) {
-				parameterLines.Add(Document.ReadSpecificLineFromFile(path, item));
-			}
-
-			return parameterLines;
-		}
-		private static Collection<int> GenerateRandomValues(int amountOfValuesToGenerate)
-		{
-			var random = new Random();
-			var collectionOfRandomValues = new Collection<int>();
-
-			for (int i = 0; i < amountOfValuesToGenerate; i++) {
-				var value = random.Next(1000);
-				if (!collectionOfRandomValues.Contains(value))
-					collectionOfRandomValues.Add(value);
-				else
-					i--;
-			}
-
-			return collectionOfRandomValues;
 		}
 	}
 }

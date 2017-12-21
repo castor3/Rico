@@ -58,6 +58,8 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="General.cs" />
+    <Compile Include="ParameterModelTest.cs" />
     <Compile Include="ParametersTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
