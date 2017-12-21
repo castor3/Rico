@@ -25,6 +25,7 @@
 23 - Fix "GetParameterName()" for some parameters (ex: Deceleration	max. speed to 0  (3907))		<<<DONE>>>
 24 - Add name/model of the machine (from the textbox) to the beginning of each set of values collected	<<<DONE>>>
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
+26 - Add Mock package - https://www.youtube.com/watch?v=Krj3-h198KQ
 
 
 refactor entire "CollectValidParameter()"
