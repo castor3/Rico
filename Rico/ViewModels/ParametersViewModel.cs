@@ -180,7 +180,9 @@ namespace Rico.ViewModels
 
 			if (!File.Exists(BaseMachineParameters)) {
 				UpdateStatusBar("There's a file missing");
-				Document.WriteToLogFile(LogFilePath, $"In method: '{nameof(CollectValues)}()' -> '{BaseMachineParameters}' file is missing.");
+				Document.WriteToLogFile(LogFilePath,
+										$"In method: '{nameof(CollectValues)}()' " +
+										$"-> '{BaseMachineParameters}' file is missing.");
 				return false;
 			}
 
@@ -237,26 +239,26 @@ namespace Rico.ViewModels
 						UpdateStatusBar($"Error collecting values");
 						Document.WriteToLogFile(LogFilePath,
 												$"In method: '{nameof(parameter.CollectValidParameter)}()' " +
-												"-> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' " +
+												$"-> Error collecting values, the parameter '{parameterFromList.Trim('=').Trim()}' " +
 												"doesn't have a value to collect.");
 						return false;
 					}
 				}
-				
-				var indexOfComma = parameter.Name.IndexOf(',');
-				if (indexOfComma > -1)
-					parameter.Name.Remove(indexOfComma, 1);
-
 
 				parameter.Average /= parameter.NumberOfOccurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
+
+				
+				var indexOfComma = parameter.Name.IndexOf(",");
+				if (indexOfComma > -1)
+					parameter.Name = parameter.Name.Remove(indexOfComma, 1);
 
 
 				if (string.IsNullOrWhiteSpace(parameter.Name)) {
 					UpdateStatusBar("Error collecting values");
 					Document.WriteToLogFile(LogFilePath,
 											$"In method: '{nameof(CollectValues)}()' " +
-											"-> Error collecting values on parameter '{parameter.Name}', name returned empty.");
+											$"-> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
 
