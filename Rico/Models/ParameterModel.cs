@@ -185,7 +185,7 @@ namespace Rico.Models
 		{
 			Match regexResult;
 			try {
-				regexResult = Regex.Match(ParameterLine, @"\s=\s*(-?[0-9]*\.?[0-9]*)");
+				regexResult = Regex.Match(ParameterLine, @"\s*(-?[0-9]*\.?[0-9]*)");
 				//Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
 				//							.Where(c => c != "." && c.Trim() != "")
 				//							.First();
