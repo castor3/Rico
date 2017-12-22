@@ -5,7 +5,7 @@ using SupportFiles;
 
 namespace Rico.Models
 {
-	public class Parameter
+	public class ParameterModel
 	{
 		private string _name;
 		private string _value;
@@ -76,7 +76,7 @@ namespace Rico.Models
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
 
 			if (IsFirstCycle) {
-				GetParameterName();
+				GetParameterNameAndCode();
 				IsFirstCycle = false;
 			}
 
@@ -120,40 +120,28 @@ namespace Rico.Models
 			ParameterLine = string.Empty;
 			return false;
 		}
-		public bool GetParameterCode()
-		{
-			var regexResult = RegexNameAndCode();
-			if (regexResult == null) return false;
-
-			var parameterCode = string.Empty;
-			if (regexResult.Groups.Count == 4)
-				parameterCode = regexResult.Groups[3].Value;
-
-			Code = parameterCode;
-			return true;
-		}
-		public bool GetParameterName()
+		public bool GetParameterNameAndCode()
 		{
 			var regexResult = RegexNameAndCode();
 
-			if (regexResult == null) return false;
+			if (regexResult == null ||
+				!regexResult.Success ||
+				regexResult.Groups.Count != 4) return false;
 
-			var parameterName = string.Empty;
-			if (regexResult.Groups.Count == 4)
-				parameterName = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
-			else
-				return false;
+			Name = regexResult.Groups[1].Value + "(" + regexResult.Groups[3].Value + ")";
+			Code = regexResult.Groups[3].Value;
 
-
-			Name = parameterName;
 			return true;
 		}
 		public bool GetParameterValue()
 		{// Uses the entire parameter line to extract the value (as string)
-			if (string.IsNullOrWhiteSpace(ParameterLine)) return false;
+
+			if (string.IsNullOrWhiteSpace(ParameterLine) || !ParameterLine.Contains("=")) return false;
+
 
 			var index = (byte)ParameterLine.IndexOf('=');
 			ParameterLine = ParameterLine.Substring(index + 1).Trim();
+
 
 			// This means that the ParameterLine does not contain any value after the '='
 			if (string.IsNullOrWhiteSpace(ParameterLine)) {
@@ -163,7 +151,9 @@ namespace Rico.Models
 
 			var regexResult = RegexValue();
 
-			if (!regexResult.Success) return false;
+			if (regexResult == null ||
+				!regexResult.Success ||
+				regexResult.Groups.Count < 2) return false;
 
 			Value = regexResult.Groups[1].Value;
 
@@ -171,30 +161,22 @@ namespace Rico.Models
 		}
 		public Match RegexNameAndCode()
 		{
-			Match regexResult;
 			try {
 				// escapes -> -  .  ,  /  \  "  )  ( 
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)\s=");
+				return Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)\s=");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return null;
+				return Regex.Match(string.Empty, @"\S");
 			}
-			return regexResult;
 		}
 		public Match RegexValue()
 		{
-			Match regexResult;
 			try {
-				regexResult = Regex.Match(ParameterLine, @"\s*(-?[0-9]*\.?[0-9]*)");
-				//Value = Regex.Split(ParameterLine, @"[^0-9\.]+")
-				//							.Where(c => c != "." && c.Trim() != "")
-				//							.First();
+				return Regex.Match(ParameterLine, @"\s+?(\-?[0-9]*\.?[0-9]*)");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
-				return null;
+				return Regex.Match(string.Empty, @"\S");
 			}
-
-			return regexResult;
 		}
 	}
 }
