@@ -58,7 +58,9 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ParametersTest.cs" />
+    <Compile Include="General.cs" />
+    <Compile Include="ParameterModelTest.cs" />
+    <Compile Include="ParametersViewModelTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
