@@ -23,8 +23,8 @@
 21 - Find version of "machinesparameters.txt" file and ignore if it's an incompatible version		<<<DONE>>>
 22 - Add handler for global uncaught exceptions														<<<DONE>>>
 23 - Fix "GetParameterName()" for some parameters (ex: Deceleration	max. speed to 0  (3907))		<<<DONE>>>
-24 - Add name/model of the machine (from the textbox) to the beginning of each set of values collected	<<<DONE>>>
+24 - Add name/model of the machine (from the textbox) to the beginning of each set of values colle.	<<<DONE>>>
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
-
+26 - Add code to check if it's a parameter of auxiliary axis "if (!parameter.GetPar...file))"	
 
 refactor entire "CollectValidParameter()"

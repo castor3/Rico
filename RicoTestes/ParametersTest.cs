@@ -72,17 +72,19 @@ namespace RicoTestes
 			//var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
 			var path = viewModel.BaseMachineParameters;
 
-			var linesFromFile = new Collection<string>();
+			//var linesFromFile = new Collection<string>();
 
-			// Get all valid lines from the parameters file
-			foreach (var item in Document.ReadFromFile(path)) {
-				if (string.IsNullOrWhiteSpace(item) || !item.Contains("="))
-					continue;
-				else
-					linesFromFile.Add(item);
-			}
+			//// Get all valid lines from the parameters file
+			//foreach (var item in Document.ReadFromFile(path)) {
+			//	if (string.IsNullOrWhiteSpace(item) || !item.Contains("="))
+			//		continue;
+			//	else
+			//		linesFromFile.Add(item);
+			//}
 
-			if (!(linesFromFile.Count > 0)) Assert.Fail();
+			var linesFromFile = Document.ReadFromFile(path);
+
+			if (linesFromFile.Length <= 0) Assert.Fail();
 
 			var collectionOfRandomValues = GenerateRandomValues(numberOfParametersToTest);
 
@@ -104,7 +106,7 @@ namespace RicoTestes
 			foreach (var line in lines) {
 				var parameter = new Parameter();
 				parameter.ParameterLine = line;
-				parameter.GetParameterCode();
+				if(!parameter.GetParameterCode()) continue;
 				bool isSafeCode = false;
 				if (parameter.Code != null)
 					isSafeCode = collectionOfValidCodes.Any(str => parameter.Code.StartsWith(str));
