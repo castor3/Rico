@@ -74,8 +74,6 @@ namespace Rico.Models
 		// Methods
 		public bool CollectValidParameter()
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
-			
-			_numberOfOccurrences++;
 
 			if (IsFirstCycle) {
 				GetParameterName();
@@ -94,6 +92,7 @@ namespace Rico.Models
 			}
 			else {
 				Average += parameterValueAsDouble;
+				_numberOfOccurrences++;
 				return true;
 			}
 		}
@@ -102,6 +101,9 @@ namespace Rico.Models
 			var array = parameterFromList.Split(',');
 			var hasSplited = array.Length > 1;
 			foreach (var item in Document.ReadFromFile(machineParametersFile)) {
+
+				if (!item.Contains('=')) continue;
+
 				if (hasSplited) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1]))) {
 						ParameterLine = item;
@@ -172,7 +174,7 @@ namespace Rico.Models
 			Match regexResult;
 			try {
 				// escapes -> -  .  ,  /  \  "  )  ( 
-				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)");
+				regexResult = Regex.Match(ParameterLine, @"\s{2}(([\w\-\.\,\/\\""\)\(\d]+\s{0,2})+)\s+(\w+)\s=");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
 				return null;
