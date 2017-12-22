@@ -17,11 +17,11 @@ namespace Rico.ViewModels
 	{
 		public ParametersViewModel()
 		{
-			ParametersCollection = new ObservableCollection<Parameter>() {
-				new Parameter { Code = "3895" },	// P-ganho
-				new Parameter { Code = "3915" },	// Ganho de paralelismo
-				new Parameter { Code = "1496" },	// Maximum Y1Y2 difference
-				new Parameter { Code = "4960" },	// Pressão (subindo)
+			ParametersCollection = new ObservableCollection<ParameterModel>() {
+				new ParameterModel { Code = "3895" },	// P-ganho
+				new ParameterModel { Code = "3915" },	// Ganho de paralelismo
+				new ParameterModel { Code = "1496" },	// Maximum Y1Y2 difference
+				new ParameterModel { Code = "4960" },	// Pressão (subindo)
 			};
 			NameOfFileToSearch = "Untitled folder";
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
@@ -41,8 +41,8 @@ namespace Rico.ViewModels
 
 		private string _initialPathBoxContent = Directory.GetCurrentDirectory();
 		private string _parameterBoxContent;
-		private ObservableCollection<Parameter> _parametersCollection;
-		private Parameter _parametersCollectionSelectedItem;
+		private ObservableCollection<ParameterModel> _parametersCollection;
+		private ParameterModel _parametersCollectionSelectedItem;
 		private string _statusBarContent = "Pronto";
 		private string _nameOfFileToSearch;
 
@@ -64,7 +64,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParameterBoxContent));
 			}
 		}
-		public ObservableCollection<Parameter> ParametersCollection
+		public ObservableCollection<ParameterModel> ParametersCollection
 		{
 			get {
 				return _parametersCollection;
@@ -75,7 +75,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollection));
 			}
 		}
-		public Parameter ParametersCollectionSelectedItem
+		public ParameterModel ParametersCollectionSelectedItem
 		{
 			get {
 				return _parametersCollectionSelectedItem;
@@ -138,7 +138,7 @@ namespace Rico.ViewModels
 					return;
 				}
 			}
-			ParametersCollection.Add(new Parameter { Name = ParameterBoxContent });
+			ParametersCollection.Add(new ParameterModel { Name = ParameterBoxContent });
 			ParameterBoxContent = string.Empty;
 			UpdateStatusBar("Added successfully");
 			return;
@@ -199,7 +199,7 @@ namespace Rico.ViewModels
 				InitialPathBoxContent = Directory.GetCurrentDirectory();
 
 
-			if (!GetPathsOfParametersFiles()) {
+			if (!GetPathsOfParametersFiles(InitialPathBoxContent)) {
 				UpdateStatusBar("Failed to find parameters files");
 				Document.WriteToLogFile(LogFilePath,
 										$"In method: '{nameof(GetPathsOfParametersFiles)}()' " +
@@ -208,7 +208,7 @@ namespace Rico.ViewModels
 			}
 
 
-			var validationProperties = new ParameterValidation();
+			var validationProperties = new ParameterValidationModel();
 			validationProperties.ValidateListedParameters(_listOfParametersCode, BaseMachineParameters);
 
 			if (validationProperties.NumberOfParametersNotFound > 0) {
@@ -227,7 +227,7 @@ namespace Rico.ViewModels
 
 
 			foreach (var parameterFromList in _listOfValidParameters) {
-				var parameter = new Parameter();
+				var parameter = new ParameterModel();
 
 				foreach (var file in Document.ReadFromFile(ParametersFilesPaths)) {
 				
@@ -271,10 +271,10 @@ namespace Rico.ViewModels
 
 			return Document.WriteToLogFile(LogFilePath, "Collected values successfully");
 		}
-		private bool GetPathsOfParametersFiles()
+		private bool GetPathsOfParametersFiles(string initialPath)
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
-			var paths = Directory.GetFiles(InitialPathBoxContent, "machineparameters.txt", SearchOption.AllDirectories).ToList();
+			var paths = Directory.GetFiles(initialPath, "machineparameters.txt", SearchOption.AllDirectories).ToList();
 
 			if (paths.Count <= 0) return false;
 

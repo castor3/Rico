@@ -27,6 +27,8 @@
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
 26 - Add Mock package - https://www.youtube.com/watch?v=Krj3-h198KQ
 27 - Add code to check if it's a parameter of auxiliary axis "if (!parameter.GetPar...file))"	
+28 - Add tests to "ParameterValidationModel"
+29 - Refactor entire "CollectValidParameter()"
 
 
-refactor entire "CollectValidParameter()"
+

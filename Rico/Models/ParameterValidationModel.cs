@@ -3,9 +3,9 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using SupportFiles;
 
-namespace Rico
+namespace Rico.Models
 {
-	public class ParameterValidation
+	public class ParameterValidationModel
 	{
 		private string _parametersNotFound;
 		private ICollection<string> _duplicatedParameters = new Collection<string>();
