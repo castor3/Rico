@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rico", "Rico\Rico.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rico.Test.Integration", "Rico.Test.Integration\Rico.Test.Integration.csproj", "{40E83B2B-C948-4BDF-BBD3-21FB43B6049C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rico.Test.Unit", "RicoTest.Unit\Rico.Test.Unit.csproj", "{36877093-929D-4DFE-BDE0-165D9217F312}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rico.Test.Unit", "Rico.Test.Unit\Rico.Test.Unit.csproj", "{36877093-929D-4DFE-BDE0-165D9217F312}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
