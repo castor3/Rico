@@ -38,3 +38,8 @@ Por exemplo, não é possivel distinguir, para cada um dos eixos (X1/X2/R1/...), o
 - Código: "1090"
 
 Ao iniciar "Collect Parameters", o programa vai verificar os parâmetros que foram inseridos. Por defeito, os parâmetros encontrados em duplicado, vão ser ignorados.
+
+# Há eixos auxiliares (ou opcionais como "LaserSafe") que não estão ativos em algumas máquinas.
+# Se tentar procurar por parâmetros desses eixos, em ficheiros de máquinas que não os continham, esses parâmetros vão ser ignorados e o programa vai prosseguir normalmente.
+
+

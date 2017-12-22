@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.Models;
 using Rico.ViewModels;
+using SupportFiles;
 
 namespace RicoTestes
 {
@@ -72,13 +73,12 @@ namespace RicoTestes
 		{
 			// Arrange
 			var paramModel = new Parameter { ParameterLine = string.Empty };
-			var privateObject = new PrivateObject(paramModel);
 
 			// Act
-			var result = (Match)privateObject.Invoke("RegexNameAndCode");
+			var result = paramModel.RegexNameAndCode().Success;
 
 			// Assert
-			Assert.IsNull(result);
+			Assert.IsFalse(result);
 		}
 
 		private Collection<string> GetRandomParameterLines(int numberOfLines)
