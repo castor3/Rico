@@ -228,12 +228,10 @@ namespace Rico.ViewModels
 				var parameter = new Parameter();
 
 				foreach (var file in Document.ReadFromFile(ParametersFilesPaths)) {
+				
+					// Might be an auxiliary axis and thus the parameter might not exist in this file
+					if (!parameter.GetParameterFromFile(parameterFromList, file)) continue;
 
-					if (!parameter.GetParameterFromFile(parameterFromList, file)) return false;
-					
-					// If the "ParameterLine" is empty, is probably because it searched in an incompatible file
-					// Anyway, it will proceed ('continue;') to the next file without throwing an error
-					if (string.IsNullOrWhiteSpace(parameter.ParameterLine)) continue;
 
 					if (!parameter.CollectValidParameter()) {
 						UpdateStatusBar($"Error collecting values");
@@ -244,11 +242,15 @@ namespace Rico.ViewModels
 						return false;
 					}
 				}
+				
+				var indexOfComma = parameter.Name.IndexOf(',');
+				if (indexOfComma > -1)
+					parameter.Name.Remove(indexOfComma, 1);
+
 
 				parameter.Average /= parameter.NumberOfOccurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
-				parameter.Name.Remove(parameter.Name.IndexOf(','), 1);
 
 				if (string.IsNullOrWhiteSpace(parameter.Name)) {
 					UpdateStatusBar("Error collecting values");
@@ -257,6 +259,7 @@ namespace Rico.ViewModels
 											"-> Error collecting values on parameter '{parameter.Name}', name returned empty.");
 					return false;
 				}
+
 				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
 			}
 
