@@ -45,9 +45,13 @@ namespace Rico.Models
 			}
 		}
 
-		public void ValidateListedParameters(IList<string> listOfParametersCode, string path)
+		public bool ValidateListedParameters(IList<string> listOfParametersCode, string path)
 		{// What: Check if the parameter exists in the file and if it does not have duplicates
 		 // Why: To know if it's OK to proceed with retrieving the parameter name and value from the file
+			if (listOfParametersCode.Count <= 0) return false;
+
+			if (string.IsNullOrWhiteSpace(path)) return false;
+
 			foreach (var parameterCode in listOfParametersCode) {
 				if (!CheckIfParameterExistsInFile(parameterCode, path)) {
 					NumberOfParametersNotFound++;
@@ -58,6 +62,7 @@ namespace Rico.Models
 					DuplicatedParameters.Add(parameterCode);
 				}
 			}
+			return true;
 		}
 		private bool CheckIfParameterExistsInFile(string parameter, string path)
 		{// What: Returns TRUE if it finds the parameter in the file, returns false if it doesn't find
@@ -65,6 +70,8 @@ namespace Rico.Models
 			var array = parameter.Split(',');
 			var arrayIsNotNullOrEmpty = array.Length > 0;
 			foreach (var item in Document.ReadFromFile(path)) {
+				if (!item.Contains("=") || string.IsNullOrWhiteSpace(item)) continue;
+
 				if (arrayIsNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						return true;
@@ -84,6 +91,8 @@ namespace Rico.Models
 			var array = parameter.Split(',');
 			var arrayNotNullOrEmpty = (array.Length < 1);
 			foreach (var item in Document.ReadFromFile(path)) {
+				if (!item.Contains("=") || string.IsNullOrWhiteSpace(item)) continue;
+
 				if (arrayNotNullOrEmpty) {
 					if ((item.Contains(array[0]) && item.Contains(array[array.Length - 1])))
 						if (++found > 1) return true;
