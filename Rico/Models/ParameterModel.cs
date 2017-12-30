@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using SupportFiles;
@@ -13,35 +14,30 @@ namespace Rico.Models
 		private double _average;
 		private string _code;
 		private bool _ignore;
-		private bool _isFirstCycle = true;
 		private int _numberOfOccurrences;
 
-		public string Name
-		{
+		public string Name {
 			get { return _name; }
 			set {
 				if (_name != value && value != null)
 					_name = value;
 			}
 		}
-		public string Value
-		{
+		public string Value {
 			get { return _value; }
 			set {
 				if (_value != value && value != null)
 					_value = value;
 			}
 		}
-		public string ParameterLine
-		{
+		public string ParameterLine {
 			get { return _parameterLine; }
 			set {
 				if (_parameterLine != value && value != null)
 					_parameterLine = value;
 			}
 		}
-		public double Average
-		{
+		public double Average {
 			get { return _average; }
 			set {
 				if (_average != value)
@@ -49,8 +45,7 @@ namespace Rico.Models
 			}
 		}
 		public int NumberOfOccurrences { get { return _numberOfOccurrences; } }
-		public string Code
-		{
+		public string Code {
 			get {
 				return _code;
 			}
@@ -59,15 +54,9 @@ namespace Rico.Models
 					_code = value;
 			}
 		}
-		public bool Ignore
-		{
+		public bool Ignore {
 			get { return _ignore; }
 			set { _ignore = value; }
-		}
-		public bool IsFirstCycle
-		{
-			get { return _isFirstCycle; }
-			set { _isFirstCycle = value; }
 		}
 
 
@@ -75,19 +64,16 @@ namespace Rico.Models
 		public bool CollectValidParameter()
 		{// Receives a "valid parameter" and gets its name and value from the "machineparameters.txt" file
 
-			if (IsFirstCycle) {
-				GetParameterNameAndCode();
-				IsFirstCycle = false;
-			}
-
 			GetParameterValue();
+
 
 			if (string.IsNullOrWhiteSpace(Value)) {
 				return Ignore;
 			}
 
+
 			var parameterValueAsDouble = 0.0d;
-			if (!double.TryParse(Value, out parameterValueAsDouble)) {
+			if (!double.TryParse(Value, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out parameterValueAsDouble)) {
 				return false;
 			}
 			else {
@@ -172,7 +158,7 @@ namespace Rico.Models
 		public Match RegexValue()
 		{
 			try {
-				return Regex.Match(ParameterLine, @"\s+?(\-?[0-9]*\.?[0-9]*)");
+				return Regex.Match(ParameterLine, @"\s?\=?\s?(\-?[0-9]*\.?[0-9]*)");
 			}
 			catch (Exception exc) when (exc is ArgumentException || exc is ArgumentNullException || exc is RegexMatchTimeoutException) {
 				return Regex.Match(string.Empty, @"\S");

@@ -9,29 +9,6 @@ namespace Rico.Test.Unit
 	{
 		// CollectValidParameter
 		[TestMethod]
-		public void CollectValidParameter_IfIsFirstCycle_NameHasToChange()
-		{
-			var paramModel = new ParameterModel { ParameterLine = "  Referênc.ferram.      1485 =    523.44  mm" };
-
-			var initialName = paramModel.Name;
-			paramModel.CollectValidParameter();
-			var finalName = paramModel.Name;
-
-			Assert.AreNotEqual(initialName, finalName);
-		}
-
-		[TestMethod]
-		public void CollectValidParameter_IfIsFirstCycle_HasToBeFalseAfterRunning()
-		{
-			var paramModel = new ParameterModel { ParameterLine = "  Referênc.ferram.      1485 =    523.44  mm" };
-
-			paramModel.IsFirstCycle = true;
-			paramModel.CollectValidParameter();
-
-			Assert.IsFalse(paramModel.IsFirstCycle);
-		}
-
-		[TestMethod]
 		public void CollectValidParameter_ValueIsNotDigits_ReturnFalse()
 		{
 			var result = true;
