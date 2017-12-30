@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Windows;
 using SupportFiles;
@@ -12,32 +13,28 @@ namespace Rico.Models
 		private int _numberOfParametersNotFound;
 		private int _numberOfDuplicates;
 
-		public string ParametersNotFound
-		{
+		public string ParametersNotFound {
 			get { return _parametersNotFound; }
 			set {
 				if (value != _parametersNotFound && value != null)
 					_parametersNotFound = value;
 			}
 		}
-		public ICollection<string> DuplicatedParameters
-		{
+		public ICollection<string> DuplicatedParameters {
 			get { return _duplicatedParameters; }
 			set {
 				if (value != _duplicatedParameters && value != null)
 					_duplicatedParameters = value;
 			}
 		}
-		public int NumberOfParametersNotFound
-		{
+		public int NumberOfParametersNotFound {
 			get { return _numberOfParametersNotFound; }
 			set {
 				if (value != _numberOfParametersNotFound)
 					_numberOfParametersNotFound = value;
 			}
 		}
-		public int NumberOfDuplicates
-		{
+		public int NumberOfDuplicates {
 			get { return _numberOfDuplicates; }
 			set {
 				if (value != _numberOfDuplicates)
@@ -55,7 +52,7 @@ namespace Rico.Models
 			foreach (var parameterCode in listOfParametersCode) {
 				if (!CheckIfParameterExistsInFile(parameterCode, path)) {
 					NumberOfParametersNotFound++;
-					ParametersNotFound += (parameterCode + "\n");
+					ParametersNotFound += (parameterCode + Environment.NewLine);
 				}
 				if (SearchForDuplicatedParameterInFile(parameterCode, path)) {
 					NumberOfDuplicates++;
@@ -107,8 +104,9 @@ namespace Rico.Models
 		public void DisplayParametersErrorMessages()
 		{// !!! Messages will override each other if they happen to be written to the screen at the same time
 			if (!string.IsNullOrWhiteSpace(ParametersNotFound))
-				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):\n" +
-						ParametersNotFound + "Por favor verifique o texto inserido");
+				MessageBox.Show("O(s) seguinte(s) parâmetro(s) não foi/foram encontrado(s):" +
+								Environment.NewLine +
+								ParametersNotFound + "Por favor verifique o texto inserido");
 		}
 	}
 }

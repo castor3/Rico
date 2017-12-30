@@ -26,9 +26,9 @@
 24 - Add name/model of the machine (from the textbox) to the beginning of each set of values colle.	<<<DONE>>>
 25 - Save values to CSV only after collecting all parameters, otherwise, nothing will be saved		<<<DONE>>>
 26 - Add Mock package - https://www.youtube.com/watch?v=Krj3-h198KQ
-27 - Add code to check if it's a parameter of auxiliary axis "if (!parameter.GetPar...file))"	
-28 - Add tests to "ParameterValidationModel"
-29 - Refactor entire "CollectValidParameter()"
-
+27 - Add code to check if it's a parameter of auxiliary axis "if (!parameter.GetPar...file))"
+28 - Add tests to "ParameterValidationModel"														<<<DONE>>>
+29 - Refactor entire "CollectValidParameter()"														<<<DONE>>>
+30 - Get param. name from the "Base...Parameters.txt" file (for consistency of the name language)	<<<DONE>>>
 
 

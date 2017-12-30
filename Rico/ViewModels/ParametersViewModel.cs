@@ -46,8 +46,7 @@ namespace Rico.ViewModels
 		private string _statusBarContent = "Pronto";
 		private string _nameOfFileToSearch;
 
-		public string InitialPathBoxContent
-		{
+		public string InitialPathBoxContent {
 			get { return _initialPathBoxContent; }
 			set {
 				if (_initialPathBoxContent == value || value == null) return;
@@ -55,8 +54,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(InitialPathBoxContent));
 			}
 		}
-		public string ParameterBoxContent
-		{
+		public string ParameterBoxContent {
 			get { return _parameterBoxContent; }
 			set {
 				if (_parameterBoxContent == value || value == null) return;
@@ -64,8 +62,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParameterBoxContent));
 			}
 		}
-		public ObservableCollection<ParameterModel> ParametersCollection
-		{
+		public ObservableCollection<ParameterModel> ParametersCollection {
 			get {
 				return _parametersCollection;
 			}
@@ -75,8 +72,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollection));
 			}
 		}
-		public ParameterModel ParametersCollectionSelectedItem
-		{
+		public ParameterModel ParametersCollectionSelectedItem {
 			get {
 				return _parametersCollectionSelectedItem;
 			}
@@ -86,8 +82,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(ParametersCollectionSelectedItem));
 			}
 		}
-		public string StatusBarContent
-		{
+		public string StatusBarContent {
 			get {
 				return _statusBarContent;
 			}
@@ -101,8 +96,7 @@ namespace Rico.ViewModels
 		public string BaseMachineParameters => "Parameters.txt";
 		public string ParametersFilesPaths => "machinepaths.txt";
 		public static string LogFilePath => "output_log.txt";
-		public string NameOfFileToSearch
-		{
+		public string NameOfFileToSearch {
 			get { return _nameOfFileToSearch; }
 			set {
 				if (value != _nameOfFileToSearch && value != null)
@@ -223,14 +217,29 @@ namespace Rico.ViewModels
 			_listOfValidParameters = _listOfParametersCode.Except(validationProperties.DuplicatedParameters);
 
 
-			var parameterDataToSaveToCSV = new StringBuilder($"--> Values for: '{NameOfFileToSearch}'\n");
+			var parameterDataToSaveToCSV = new StringBuilder($"--> Values for: '{NameOfFileToSearch}'" +
+																Environment.NewLine);
 
 
 			foreach (var parameterFromList in _listOfValidParameters) {
+				
+				// If parameter code is 3065, skip it (the parameter 3065 is the "Machine name")
+				if (parameterFromList.Contains("3065")) continue;
+
+
 				var parameter = new ParameterModel();
 
+				foreach (var line in Document.ReadFromFile(BaseMachineParameters)) {
+					if (line.Contains(parameterFromList))
+						parameter.ParameterLine = line;
+				}
+
+				if (string.IsNullOrWhiteSpace(parameter.ParameterLine)) return false;
+
+				parameter.GetParameterNameAndCode();
+
 				foreach (var file in Document.ReadFromFile(ParametersFilesPaths)) {
-				
+
 					// Might be an auxiliary axis and thus the parameter might not exist in this file
 					if (!parameter.GetParameterFromFile(parameterFromList, file)) continue;
 
@@ -248,7 +257,7 @@ namespace Rico.ViewModels
 				parameter.Average /= parameter.NumberOfOccurrences;
 				parameter.Name = Text.RemoveDiacritics(parameter.Name);
 
-				
+
 				var indexOfComma = parameter.Name.IndexOf(",");
 				if (indexOfComma > -1)
 					parameter.Name = parameter.Name.Remove(indexOfComma, 1);
@@ -262,10 +271,10 @@ namespace Rico.ViewModels
 					return false;
 				}
 
-				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + "\n");
+				parameterDataToSaveToCSV.Append(parameter.Name + "," + parameter.Average + Environment.NewLine);
 			}
 
-			if (!Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + "\n")) return false;
+			if (!Document.AppendToFile(CSVFilePath, parameterDataToSaveToCSV + Environment.NewLine)) return false;
 
 			UpdateStatusBar("Collected successfully");
 
