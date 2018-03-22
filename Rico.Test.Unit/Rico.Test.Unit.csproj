@@ -7,8 +7,8 @@
     <ProjectGuid>{36877093-929D-4DFE-BDE0-165D9217F312}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>RicoTestes</RootNamespace>
-    <AssemblyName>RicoTestes</AssemblyName>
+    <RootNamespace>Rico.Test.Unit</RootNamespace>
+    <AssemblyName>Rico.Test.Unit</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>

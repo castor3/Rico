@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -51,8 +52,10 @@ namespace Rico.Test.Integration
 
 			var lines = new string[numberOfParametersToTest];
 
-			for (int i = 0; i < numberOfParametersToTest; i++)
+			for (var i = 0; i < numberOfParametersToTest; i++)
+			{
 				lines[i] = Text.RemoveDiacritics(linesFromFile[collectionOfRandomValues[i]]);
+			}
 
 			GetParameterCodeFromEachOfTheChosenLines(viewModel, lines);
 
@@ -64,12 +67,14 @@ namespace Rico.Test.Integration
 
 
 			// Assert
-			if (result) {
+			if (result)
+			{
 				Assert.AreNotEqual(initialSizeCSV, finalSizeCSV);
 				Assert.AreNotEqual(initialDateCSV, finalDateCSV);
 				Assert.AreNotEqual(initialDatePaths, finalDatePaths);
 			}
-			else {
+			else
+			{
 				Assert.AreEqual(initialSizeCSV, finalSizeCSV);
 				Assert.AreEqual(initialDateCSV, finalDateCSV);
 			}
@@ -88,14 +93,19 @@ namespace Rico.Test.Integration
 			// Act
 			var linesFromFile = General.GetValidLinesFromFile(path);
 
-			if (linesFromFile.Count <= 0) Assert.Fail();
+			if (linesFromFile.Count <= 0)
+			{
+				Assert.Fail();
+			}
 
 			var collectionOfRandomValues = General.GenerateRandomValues(numberOfParametersToTest, linesFromFile.Count);
 
 			var lines = new string[numberOfParametersToTest];
 
-			for (int i = 0; i < numberOfParametersToTest; i++)
+			for (var i = 0; i < numberOfParametersToTest; i++)
+			{
 				lines[i] = Text.RemoveDiacritics(linesFromFile[collectionOfRandomValues[i]]);
+			}
 
 			GetParameterCodeFromEachOfTheChosenLines(viewModel, lines);
 
@@ -107,18 +117,32 @@ namespace Rico.Test.Integration
 
 		private static void GetParameterCodeFromEachOfTheChosenLines(ParametersViewModel viewModel, string[] lines)
 		{
-			var collectionOfValidCodes = new Collection<string>() { "MS", "MA", "MD", "ES", "PR", "SL" };
-			int uselessInt;
+			if (lines == null)
+			{
+				return;
+			}
+
+			var collectionOfValidCodes = new Collection<string> { "MS", "MA", "MD", "ES", "PR", "SL" };
 			viewModel.ParametersCollection.Clear();
-			foreach (var line in lines) {
-				var parameter = new ParameterModel();
-				parameter.ParameterLine = line;
-				if (!parameter.GetParameterNameAndCode()) continue;
-				bool isSafeCode = false;
-				if (parameter.Code != null)
-					isSafeCode = collectionOfValidCodes.Any(str => parameter.Code.StartsWith(str));
-				if (!int.TryParse(parameter.Code, out uselessInt) && !isSafeCode)
+			foreach (var line in lines)
+			{
+				var parameter = new ParameterModel { ParameterLine = line };
+				if (!parameter.GetParameterNameAndCode())
+				{
 					continue;
+				}
+
+				var isSafeCode = false;
+				if (parameter.Code != null)
+				{
+					isSafeCode = collectionOfValidCodes.Any(str => parameter.Code.StartsWith(str));
+				}
+
+				int uselessInt;
+				if (!int.TryParse(parameter.Code, out uselessInt) && !isSafeCode)
+				{
+					continue;
+				}
 				viewModel.ParametersCollection.Add(parameter);
 			}
 		}

@@ -6,14 +6,15 @@ using SupportFiles;
 
 namespace Rico.Test.Integration
 {
-	class General
+	internal class General
 	{
 		public static Collection<int> GenerateRandomValues(int amountOfValuesToGenerate, int maxValue)
 		{
 			var random = new Random();
 			var collectionOfRandomValues = new Collection<int>();
 
-			for (int i = 0; i < amountOfValuesToGenerate; i++) {
+			for (var i = 0; i < amountOfValuesToGenerate; i++)
+			{
 				var value = random.Next(maxValue);
 				if (!collectionOfRandomValues.Contains(value))
 					collectionOfRandomValues.Add(value);
@@ -27,8 +28,10 @@ namespace Rico.Test.Integration
 		public static List<string> GetValidLinesFromFile(string path)
 		{
 			var linesFromFile = Document.ReadFromFile(path).ToList();
-			for (int i = linesFromFile.Count - 1; i >= 0; i--) {
-				if (string.IsNullOrWhiteSpace(linesFromFile[i]) || !linesFromFile[i].Contains("=")) {
+			for (var i = linesFromFile.Count - 1; i >= 0; i--)
+			{
+				if (string.IsNullOrWhiteSpace(linesFromFile[i]) || !linesFromFile[i].Contains("="))
+				{
 					linesFromFile.RemoveAt(i);
 				}
 			}

@@ -25,13 +25,15 @@ namespace Rico.Test.Unit
 			foreach (var item in parameterLines) {
 
 				var paramModel = new ParameterModel { ParameterLine = item };
-				var parameterValueAsDouble = 0.0d;
 
+				double parameterValueAsDouble;
 				var collectResult = paramModel.CollectValidParameter();
 				var conversionSuccessful = double.TryParse(paramModel.Value, out parameterValueAsDouble);
 
 				if (conversionSuccessful != collectResult)
+				{
 					result = false;
+				}
 			}
 
 			Assert.IsTrue(result);
@@ -80,12 +82,12 @@ namespace Rico.Test.Unit
 			var finalName = paramModel.Name;
 			var finalCode = paramModel.Code;
 
-			var NameIsDifferent = initialName != finalName;
-			var CodeIsDifferent = initialCode != finalCode;
+			var nameIsDifferent = initialName != finalName;
+			var codeIsDifferent = initialCode != finalCode;
 			
 			
 			// Assert
-			Assert.IsTrue(NameIsDifferent && CodeIsDifferent);
+			Assert.IsTrue(nameIsDifferent && codeIsDifferent);
 		}
 
 		[TestMethod]

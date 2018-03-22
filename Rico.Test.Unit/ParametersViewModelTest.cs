@@ -25,9 +25,8 @@ namespace Rico.Test.Unit
 		[TestMethod]
 		public void CheckInputBoxIsClearAfterParameterAdded()
 		{
-			var viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel { ParameterBoxContent = "test" };
 
-			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 
 			Assert.IsTrue(string.IsNullOrEmpty(viewModel.ParameterBoxContent));
@@ -69,9 +68,8 @@ namespace Rico.Test.Unit
 		[TestMethod]
 		public void PreventDuplicateParameterTest()
 		{
-			var viewModel = new ParametersViewModel();
+			var viewModel = new ParametersViewModel { ParameterBoxContent = "test" };
 
-			viewModel.ParameterBoxContent = "test";
 			viewModel.AddParameter();
 			var initialCount = viewModel.ParametersCollection.Count;
 			viewModel.ParameterBoxContent = "test";
@@ -88,22 +86,18 @@ namespace Rico.Test.Unit
 			var viewModel = new ParametersViewModel();
 			var mockParameterModel = new Mock<ParameterModel>().Object;
 			mockParameterModel.Name = "test";
-			
 
 			// Act
 			var initialCount = viewModel.ParametersCollection.Count;
-			
 			viewModel.ParametersCollection.Add(mockParameterModel);
-			
 			var intermediateCount = viewModel.ParametersCollection.Count;
-
-			if (intermediateCount == initialCount) Assert.Fail();
-
+			if (intermediateCount == initialCount)
+			{
+				Assert.Fail();
+			}
 			viewModel.ParametersCollectionSelectedItem = mockParameterModel;
 			viewModel.RemoveParameter();
-			
 			var finalCount = viewModel.ParametersCollection.Count;
-
 
 			// Assert
 			Assert.AreEqual(initialCount, finalCount);

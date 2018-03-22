@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Rico.Models;
 
@@ -12,7 +12,7 @@ namespace Rico.Test.Unit
 		{
 			var validationModel = new ParameterValidationModel();
 
-			var result = validationModel.ValidateListedParameters(new List<string>(), "text");
+			var result = validationModel.ValidateListedParameters(Array.Empty<string>(), "text");
 
 			Assert.IsFalse(result);
 		}
@@ -22,7 +22,7 @@ namespace Rico.Test.Unit
 		{
 			var validationModel = new ParameterValidationModel();
 
-			var result = validationModel.ValidateListedParameters(new List<string> { "text" }, string.Empty);
+			var result = validationModel.ValidateListedParameters(new[] { "text" }, string.Empty);
 
 			Assert.IsFalse(result);
 		}
@@ -32,7 +32,7 @@ namespace Rico.Test.Unit
 		{
 			var validationModel = new ParameterValidationModel();
 
-			var result = validationModel.ValidateListedParameters(new List<string> { "text" }, "text");
+			var result = validationModel.ValidateListedParameters(new[] { "text" }, "text");
 
 			Assert.IsTrue(result);
 		}
