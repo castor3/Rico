@@ -23,7 +23,7 @@
 	<Grid DataContext="{Binding Source={StaticResource viewModel}}">
 		<StackPanel Margin="0,0,0,22">
 			<Image Height="50" Width="250" Source="\Resources\logo.jpg" Margin="0,10,0,0"/>
-			<Label Content="Initial path:" Foreground="White"/>
+			<Label Content="Initial path :" Foreground="White"/>
 			<TextBox Text="{Binding Path=InitialPathBoxContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="22" FontSize="11" BorderThickness="1.5" BorderBrush="Black" Margin="0,0,0,10"/>
 			<Button Command="{Binding Path=AddParameterCommand, Source={StaticResource viewModel}}"
@@ -36,8 +36,8 @@
 					 ItemTemplate="{StaticResource templateLista}" Height="180" BorderThickness="1.5" BorderBrush="Black" Margin="0,0,0,5"/>
 			<Button Command="{Binding Path=RemoveParameterCommand, Source={StaticResource viewModel}}"
 					Content="Remove parameter" Height="30" Margin="0,0,0,5"/>
-			<Label Content="File name (ex. PRCB 30250) :" Foreground="White"/>
-			<TextBox Text="{Binding Path=NameOfFileToSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+			<Label Content="Machine name (ex.: PRCB 30250) :" Foreground="White"/>
+			<TextBox Text="{Binding Path=NameOfFolderToSearch, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
 					 Height="25" FontSize="12" BorderThickness="1.5" BorderBrush="Black" Margin="0,0,0,2"/>
 			<Button Command="{Binding Path=CollectValuesCommand, Source={StaticResource viewModel}}"
 					Content="Collect parameters" Height="30" />

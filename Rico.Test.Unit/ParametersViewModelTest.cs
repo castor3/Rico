@@ -35,7 +35,7 @@ namespace Rico.Test.Unit
 		[TestMethod]
 		public void CollectValues_NameOfFileToSearchIsEmpty_ReturnFalse()
 		{
-			var viewModel = new ParametersViewModel { NameOfFileToSearch = string.Empty };
+			var viewModel = new ParametersViewModel { NameOfFolderToSearch = string.Empty };
 
 			var result = viewModel.CollectValues();
 

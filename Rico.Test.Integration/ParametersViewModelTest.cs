@@ -89,6 +89,7 @@ namespace Rico.Test.Integration
 			var viewModel = new ParametersViewModel();
 			//var path = Path.Combine(@"..\..\..\..\Rico\Rico\bin\Debug\", viewModel.BaseMachineParameters);
 			var path = viewModel.BaseMachineParameters;
+			viewModel.NameOfFolderToSearch = "Untitled Folder";
 
 			// Act
 			var linesFromFile = General.GetValidLinesFromFile(path);

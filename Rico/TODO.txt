@@ -30,5 +30,3 @@
 28 - Add tests to "ParameterValidationModel"														<<<DONE>>>
 29 - Refactor entire "CollectValidParameter()"														<<<DONE>>>
 30 - Get param. name from the "Base...Parameters.txt" file (for consistency of the name language)	<<<DONE>>>
-
-

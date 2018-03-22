@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -15,20 +16,14 @@ namespace Rico.ViewModels
 	{
 		public ParametersViewModel()
 		{
-			ParametersCollection = new ObservableCollection<ParameterModel>() {
-				new ParameterModel { Code = "3895" },	// P-ganho
-				new ParameterModel { Code = "3915" },	// Ganho de paralelismo
-				new ParameterModel { Code = "1496" },	// Maximum Y1Y2 difference
-				new ParameterModel { Code = "4960" },	// Pressão (subindo)
-			};
-			NameOfFileToSearch = "Untitled folder";
+			ParametersCollection = new ObservableCollection<ParameterModel>();
 			AddParameterCommand = new RelayCommand(CanAddParameter, AddParameter);
 			RemoveParameterCommand = new RelayCommand(CanRemoveParameter, RemoveParameter);
 			CollectValuesCommand = new RelayCommand(CanCollectValues, ExecuteCollectValues);
 		}
 
 		#region Fields
-		private string _initialPathBoxContent = Directory.GetCurrentDirectory();
+		private string _initialPathBoxContent /*= Directory.GetCurrentDirectory()*/;
 		private string _parameterBoxContent;
 		private ObservableCollection<ParameterModel> _parametersCollection;
 		private ParameterModel _parametersCollectionSelectedItem;
@@ -91,7 +86,7 @@ namespace Rico.ViewModels
 				RaisePropertyChanged(nameof(StatusBarContent));
 			}
 		}
-		public string NameOfFileToSearch
+		public string NameOfFolderToSearch
 		{
 			get { return _nameOfFileToSearch; }
 			set
@@ -126,24 +121,24 @@ namespace Rico.ViewModels
 		}
 		public void AddParameter()
 		{
-			if (ParametersCollection.Any(item => item.Name == ParameterBoxContent))
+			if (ParametersCollection.Any(item => item.Code == ParameterBoxContent))
 			{
 				UpdateStatusBar("Parâmetro já foi adicionado à lista");
 				ParameterBoxContent = string.Empty;
 				return;
 			}
-			ParametersCollection.Add(new ParameterModel { Name = ParameterBoxContent });
+			ParametersCollection.Add(new ParameterModel { Code = ParameterBoxContent });
 			ParameterBoxContent = string.Empty;
 			UpdateStatusBar("Added successfully");
 		}
 		private bool CanRemoveParameter()
-			=> !string.IsNullOrEmpty(_parametersCollectionSelectedItem?.Name);
-		
+			=> !string.IsNullOrEmpty(_parametersCollectionSelectedItem?.Code);
+
 		public void RemoveParameter()
 		{
 			foreach (var item in ParametersCollection)
 			{
-				if (item.Name != ParametersCollectionSelectedItem.Name)
+				if (item.Code != ParametersCollectionSelectedItem.Code)
 				{
 					continue;
 				}
@@ -162,7 +157,7 @@ namespace Rico.ViewModels
 		}
 		public bool CollectValues()
 		{
-			if (string.IsNullOrWhiteSpace(NameOfFileToSearch))
+			if (string.IsNullOrWhiteSpace(NameOfFolderToSearch))
 			{
 				UpdateStatusBar("Need to specify the machine name/model");
 				return false;
@@ -213,7 +208,7 @@ namespace Rico.ViewModels
 			var listOfValidParameters = listOfParametersCode.Except(validationProperties.DuplicatedParameters);
 
 
-			var parameterDataToSaveToCSV = new StringBuilder($"--> Medias p/ modelo: '{NameOfFileToSearch}'" +
+			var parameterDataToSaveToCSV = new StringBuilder($"--> Medias p/ modelo: '{NameOfFolderToSearch}'" +
 																Environment.NewLine);
 
 
@@ -268,7 +263,7 @@ namespace Rico.ViewModels
 					UpdateStatusBar("Error collecting values");
 					Document.WriteToLogFile(LogFilePath,
 											$"In method: '{nameof(CollectValues)}()' " +
-											$"-> Error collecting values on parameter '{parameter.Name}', name returned empty.");
+											$"-> Error collecting values on parameter '{parameter.Code}', name returned empty.");
 					return false;
 				}
 
@@ -287,7 +282,17 @@ namespace Rico.ViewModels
 		private bool GetPathsOfParametersFiles(string initialPath)
 		{// What: Gets all paths for the parameters files, recursively, starting on the "InitialPathBox" path
 		 // Why: To have a list with the paths of all the "machineparameters.txt" from which we will retrieve the values
-			var paths = Directory.GetFiles(initialPath, "machineparameters.txt", SearchOption.AllDirectories).ToList();
+			var paths = new List<string>();
+			try
+			{
+				paths = Directory.GetFiles(initialPath, "machineparameters.txt", SearchOption.AllDirectories).ToList();
+			}
+			catch (DirectoryNotFoundException exc)
+			{
+				UpdateStatusBar(exc.Message);
+				Document.WriteToLogFile(LogFilePath, $"Directory not found -> {exc.Message}");
+				return false;
+			}
 
 			if (paths.Count <= 0)
 			{
@@ -297,7 +302,7 @@ namespace Rico.ViewModels
 			for (var i = paths.Count - 1; i >= 0; i--)
 			{
 				// Check if the file is in a folder that the user wants to see (ex: contains the name/model of the machine)
-				if (!paths[i].ToLower().Contains(NameOfFileToSearch.ToLower()))
+				if (!paths[i].ToLower().Contains(NameOfFolderToSearch.ToLower()))
 				{
 					paths.RemoveAt(i);
 					continue;
@@ -313,8 +318,7 @@ namespace Rico.ViewModels
 					paths.RemoveAt(i);
 				}
 			}
-
-			return Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
+			return paths.Count > 0&& Document.WriteToFile(ParametersFilesPaths, paths.ToArray());
 		}
 		#region StatusBar
 		// Status bar update
